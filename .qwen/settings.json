@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python *)",
+      "Bash(from *)",
+      "Bash(conn *)",
+      "Bash(cur *)",
+      "Bash(try:)",
+      "Bash(cur.execute)",
+      "Bash(print)",
+      "Bash(except *)",
+      "Bash(else:)",
+      "Bash(conn.commit)",
+      "Bash(conn.close)",
+      "Bash(eof)",
+      "Bash(curl *)"
+    ]
+  },
+  "$version": 3
+}

@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+uploads/
+web/frontend/dist/
+web/exports/
+*.xlsx
+*.xls
+.env
+node_modules/
+pod-desktop/node_modules/
+pod-desktop/release/
+pod-desktop/Bewa-Desktop-Portable.zip
+
+# Database config (if contains sensitive info)
+# config/database.py (Commented out because this is the template, .env handles the rest)

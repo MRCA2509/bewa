@@ -1,0 +1,25 @@
+FILE: C:\Users\User\Pictures\bewa\9770f59016f844bfa24b1b89bfaa4c0c_Pencarian Status Ter-update-最后状态查询-202603282054122.xlsx
+======================================================================
+Sheet names: ['Sheet0']
+
+--- Sheet: Sheet0 ---
+Columns: ['-', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8', 'Unnamed: 9', 'Unnamed: 10', 'Unnamed: 11', 'Unnamed: 12', 'Unnamed: 13', 'Unnamed: 14', 'Unnamed: 15', 'Unnamed: 16', 'Unnamed: 17', 'Unnamed: 18', 'Unnamed: 19', 'Unnamed: 20', 'Unnamed: 21', 'Unnamed: 22', 'Unnamed: 23', 'Unnamed: 24', 'Scan Ter-update', 'Unnamed: 26', 'Unnamed: 27', 'Unnamed: 28', 'Unnamed: 29', 'Unnamed: 30', 'Unnamed: 31', 'Unnamed: 32', 'Unnamed: 33']
+First 3 rows:
+             -           Unnamed: 1     Unnamed: 2           Unnamed: 3             Unnamed: 4           Unnamed: 5      Unnamed: 6    Unnamed: 7           Unnamed: 8    Unnamed: 9 Unnamed: 10      Unnamed: 11      Unnamed: 12   Unnamed: 13 Unnamed: 14    Unnamed: 15 Unnamed: 16 Unnamed: 17      Unnamed: 18       Unnamed: 19      Unnamed: 20 Unnamed: 21        Unnamed: 22             Unnamed: 23                                                                         Unnamed: 24 Scan Ter-update Unnamed: 26          Unnamed: 27                     Unnamed: 28                Unnamed: 29 Unnamed: 30    Unnamed: 31                    Unnamed: 32                     Unnamed: 33
+0  No. Waybill             No Order   Diinput oleh          Waktu Input               Penerima            Waktu TTD  Agent Outgoing   DP Outgoing   Tanggal Pengiriman  Agent Tujuan      Tujuan  Provinsi Tujuan      Kota Tujuan           NLC      DP NLC  Jenis Layanan   Biaya COD  total DFOD  Tipe Pembayaran  Berat Ditagih     Status Asuransi  End Status  Waktu Regis Retur  Waktu Konfirmasi Retur                                                                          Keterangan    Station Scan  Jenis Scan           Waktu Scan                     Discan Oleh  Sprinter PU atau Delivery  Agent Scan  Nomor Bagging  Alasan Masalah/Tinggal Gudang  Lokasi Sebelumnya / Berikutnya
+1   1352425936  3893796459315486765    Ari Aryanto  2026-02-23 16:49:47  Sugeng (082239750827)  2026-03-02 13:57:49         AGENT16       CIBADAK  2026-02-23 16:49:47       AGENT23        MABA     MALUKU UTARA  HALMAHERA TIMUR  TTE-MAB02-02        BULI             EZ      200000           0            PP_PM              0.04               Ya         NaN                NaN                     NaN  (JANGAN RETURN ,,,  JIKA BUYER NO RESPON , KURIR WAJIB WA PENGIRIM 0813-9881-2881)            BULI    Scan TTD  2026-03-02 13:57:49  MH FRIENDLY REGINO REZA SINDUA                        NaN     AGENT23            NaN                            NaN                             NaN
+2   1352644768  3893658740429967395  Rahmat Aripin  2026-02-23 16:07:18          AYUB MARSAOLY  2026-03-04 18:05:50         AGENT10  DIPONEGORO_2  2026-02-23 16:05:14       AGENT23        MABA     MALUKU UTARA  HALMAHERA TIMUR  TTE-MAB02-02        BULI             EZ      244000           0            PP_PM               0.1            Tidak         NaN                NaN                     NaN                                                                JANGAN RETUR, HUB WA            BULI    Scan TTD  2026-03-04 18:05:50       MH JILIANI ALFIRA ONDOKOI                        NaN     AGENT23            NaN                            NaN                             NaN
+
+
+FILE: C:\Users\User\Pictures\bewa\Monitor Sampai(Refine)(Detail)668488520260328204423.xlsx
+======================================================================
+Sheet names: ['sheet0']
+
+--- Sheet: sheet0 ---
+Columns: ['No. Waybill', 'DP Outgoing', 'Tujuan', 'Jenis Layanan', 'Sumber Order', 'Berat Ditagih   ', 'Drop Point', 'Waktu Sampai', 'Lokasi Sebelumnya', 'Discan oleh']
+First 3 rows:
+  No. Waybill   DP Outgoing Tujuan Jenis Layanan Sumber Order  Berat Ditagih    Drop Point        Waktu Sampai Lokasi Sebelumnya            Discan oleh
+0  1352425936       CIBADAK   MABA            EZ          VIP              0.04       BULI 2026-03-01 04:09:36       TTE_GATEWAY  MH YEHESKIEL PASIAKAN
+1  1352644768  DIPONEGORO_2   MABA            EZ          VIP              0.10       BULI 2026-03-01 04:07:02       TTE_GATEWAY  MH YEHESKIEL PASIAKAN
+2  1352723891        GRT05C   MABA            EZ          VIP              1.00       BULI 2026-03-01 04:05:53       TTE_GATEWAY  MH YEHESKIEL PASIAKAN
+
