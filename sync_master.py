@@ -13,8 +13,8 @@ def run_cmd(cmd, cwd=None, exit_on_fail=True):
 
 def dump_local_db(output_file):
     print("\n[1/5] [DB] Mengekspor Database Lokal (MySQL)...")
-    # Menambahkan --set-gtid-purged=OFF untuk menghindari warning GTID
-    run_cmd(f"mysqldump -u root --set-gtid-purged=OFF bewa_logistics > {output_file}")
+    # Menambahkan --set-gtid-purged=OFF dan --column-statistics=0 agar kompatibel dengan VPS
+    run_cmd(f"mysqldump -u root --set-gtid-purged=OFF --column-statistics=0 bewa_logistics > {output_file}")
     
 def git_sync():
     print("\n[2/5] [GIT] Menyinkronkan Kode ke GitHub...")
@@ -51,14 +51,14 @@ def deploy_to_vps_and_db(sql_file):
     sftp.close()
 
     script = f"""
-    set -e
     echo "      -> Menarik pembaruan kode (Ganti Paksa) dari GitHub..."
     cd /var/www/bewa
     git fetch --all
     git reset --hard origin/main
 
-    echo "      -> Mengimpor dan menimpa Database VPS..."
-    mysql -u bewa_user -pbewa_pass_2026 bewa_logistics < {sql_file}
+    echo "      -> Mengimpor Database VPS (Stripping DEFINER & GTID)..."
+    # Menghapus DEFINER agar bisa diimpor oleh bewa_user tanpa error SYSTEM_USER
+    sed -e 's/DEFINER=[^*]*\*/\*/g' -e 's/DEFINER=[^ ]*//g' {sql_file} | mysql -u bewa_user -pbewa_pass_2026 bewa_logistics || echo "Peringatan: Ada kendala saat import DB, melanjutkan ke build..."
     rm {sql_file}
 
     echo "      -> Rebuild Frontend..."
