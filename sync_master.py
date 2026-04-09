@@ -50,30 +50,37 @@ def deploy_to_vps_and_db(sql_file):
     print("\n      -> Upload Selesai!")
     sftp.close()
 
+    # Script diringkas untuk membersihkan GTID dan DEFINER secara agresif
+    # Menggunakan grep -v untuk membuang baris GTID_PURGED yang menyebabkan error SYSTEM_USER
     script = f"""
     echo "      -> Menarik pembaruan kode (Ganti Paksa) dari GitHub..."
     cd /var/www/bewa
     git fetch --all
     git reset --hard origin/main
 
-    echo "      -> Mengimpor Database VPS (Stripping DEFINER & GTID)..."
-    # Menghapus DEFINER agar bisa diimpor oleh bewa_user tanpa error SYSTEM_USER
-    sed -e 's/DEFINER=[^*]*\*/\*/g' -e 's/DEFINER=[^ ]*//g' {sql_file} | mysql -u bewa_user -pbewa_pass_2026 bewa_logistics || echo "Peringatan: Ada kendala saat import DB, melanjutkan ke build..."
+    echo "      -> Mengimpor Database VPS (Pembersihan Agresif)..."
+    # Mengabaikan GTID_PURGED dan membersihkan DEFINER
+    grep -v "GTID_PURGED" {sql_file} | sed -e 's/DEFINER=[^*]*\*/\*/g' -e 's/DEFINER=[^ ]*//g' | mysql -u bewa_user -pbewa_pass_2026 bewa_logistics || echo "Warning: DB error ignored to proceed."
     rm {sql_file}
 
     echo "      -> Rebuild Frontend..."
     cd web/frontend
     rm -rf node_modules/.vite
-    npm install
+    npm install --quiet
     npm run build
 
-    echo "      -> Restarting layanan Backend (Gunicorn & Nginx)..."
+    echo "      -> Restarting layanan Backend..."
     systemctl restart bewa nginx
     """
     
     stdin, stdout, stderr = client.exec_command(script, get_pty=True)
+    # Gunakan encoding ignore agar tidak crash saat ada karakter aneh dari terminal VPS
     for line in iter(stdout.readline, ""):
-        print("VPS> " + line.strip("\n"))
+        try:
+            print("VPS> " + line.strip("\n"))
+        except UnicodeEncodeError:
+            safe_line = line.encode('ascii', 'ignore').decode('ascii')
+            print("VPS> " + safe_line.strip("\n"))
         
     client.close()
 
