@@ -12,20 +12,19 @@ def run_cmd(cmd, cwd=None, exit_on_fail=True):
     return result
 
 def dump_local_db(output_file):
-    print("\n[1/5] 📦 Mengekspor Database Lokal (MySQL)...")
-    # Asumsikan username root dan tanpa password di XAMPP lokal
-    # Jika menggunakan password, tambahkan -pYourPassword
-    run_cmd(f"mysqldump -u root bewa_logistics > {output_file}")
+    print("\n[1/5] [DB] Mengekspor Database Lokal (MySQL)...")
+    # Menambahkan --set-gtid-purged=OFF untuk menghindari warning GTID
+    run_cmd(f"mysqldump -u root --set-gtid-purged=OFF bewa_logistics > {output_file}")
     
 def git_sync():
-    print("\n[2/5] 🐙 Menyinkronkan Kode ke GitHub...")
+    print("\n[2/5] [GIT] Menyinkronkan Kode ke GitHub...")
     run_cmd("git add .")
     # Abaikan error jika tidak ada yang perlu di-commit
     subprocess.run('git commit -m "Auto-sync master dari lokal"', shell=True)
     run_cmd("git push origin main")
 
 def deploy_to_vps_and_db(sql_file):
-    print("\n[3/5] 🚀 Mengunggah Database dan Deploy ke VPS...")
+    print("\n[3/5] [VPS] Mengunggah Database dan Deploy ke VPS...")
     hostname = "72.62.120.102"
     username = "root"
     password = "passwordE@25"
@@ -40,7 +39,6 @@ def deploy_to_vps_and_db(sql_file):
         
     def progress_callback(transferred, total):
         percent = (transferred / total) * 100
-        # Menggunakan carriage return \r untuk menimpa baris yang sama agar bersih
         sys.stdout.write(f"\r      -> Progress Upload: {percent:.1f}% ({transferred/(1024*1024):.1f} MB / {total/(1024*1024):.1f} MB)")
         sys.stdout.flush()
 
@@ -54,9 +52,10 @@ def deploy_to_vps_and_db(sql_file):
 
     script = f"""
     set -e
-    echo "      -> Menarik pembaruan kode dari GitHub..."
+    echo "      -> Menarik pembaruan kode (Ganti Paksa) dari GitHub..."
     cd /var/www/bewa
-    git pull origin main
+    git fetch --all
+    git reset --hard origin/main
 
     echo "      -> Mengimpor dan menimpa Database VPS..."
     mysql -u bewa_user -pbewa_pass_2026 bewa_logistics < {sql_file}
@@ -79,7 +78,7 @@ def deploy_to_vps_and_db(sql_file):
     client.close()
 
 def build_desktop():
-    print("\n[4/5] 💻 Mem-build Desktop App (POD Desktop)...")
+    print("\n[4/5] [DESKTOP] Mem-build Desktop App (POD Desktop)...")
     pod_dir = os.path.join(os.getcwd(), "pod-desktop")
     if os.path.exists(pod_dir):
         run_cmd("npm run dist", cwd=pod_dir)
@@ -109,4 +108,4 @@ if __name__ == "__main__":
     # 4. Build Desktop App versi baru
     build_desktop()
     
-    print("\n[5/5] ✅ SELESAI! Web VPS, Database Live, dan Desktop App telah diselaraskan dengan sempurna.")
+    print("\n[5/5] SELESAI! Web VPS, Database Live, dan Desktop App telah diselaraskan.")
