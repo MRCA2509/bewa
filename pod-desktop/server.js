@@ -8,7 +8,7 @@ const archiver = require('archiver');
 const axios = require('axios'); // We installed axios
 const { app: electronApp } = require('electron');
 const db = require('./database');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 // Use userData path for writable directories in packaged app
 const userDataPath = (electronApp || require('electron').app).getPath('userData');

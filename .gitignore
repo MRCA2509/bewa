@@ -40,10 +40,13 @@ Thumbs.db
 
 # Project specific
 uploads/
+data/
+eb_cache/
 web/frontend/dist/
 web/exports/
 *.xlsx
 *.xls
+*.sql
 .env
 node_modules/
 pod-desktop/node_modules/

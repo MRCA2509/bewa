@@ -252,6 +252,25 @@ def delete_user(user_id):
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
+@app.route("/api/actions/run-sync-master", methods=["POST"])
+@require_jwt
+def run_sync_master():
+    if request.user.get('role') != 'RM':
+        return jsonify({"success": False, "message": "Forbidden. Akses ditolak."}), 403
+        
+    if sys.platform != "win32":
+        return jsonify({"success": False, "message": "Fitur Sync Global hanya dapat dieksekusi secara aman melalui web di komputer lokal (Laptop/PC), bukan di VPS Cloud."}), 400
+        
+    try:
+        import subprocess
+        # Jalankan skrip deploy.bat langsung secara asinkron di command prompt.
+        # Ini akan otomatis memunculkan jendela console hitam di laptop agar prosesnya terlihat.
+        subprocess.Popen(['cmd.exe', '/c', 'start', 'deploy.bat'], cwd=BASE_DIR)
+        return jsonify({"success": True, "message": "Skrip Deploy & Sync telah dijadwalkan! Silakan pantau jendela Terminal hitam baru di layar komputer Anda."})
+    except Exception as e:
+        logger.error(f"Error triggering sync: {e}")
+        return jsonify({"success": False, "message": f"Gagal menjalankan skrip: {str(e)}"}), 500
+
 @app.route("/api/actions/sync-incoming-pod", methods=["POST"])
 @require_jwt
 def sync_incoming_pod():

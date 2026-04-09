@@ -15,7 +15,6 @@ import {
   LogOut,
   Truck,
   Monitor,
-  FileText,
   Map
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -82,15 +81,38 @@ export const Sidebar = ({ isMini, setIsMini }) => {
         <SidebarLink to="/upload" icon={<Upload size={20} />} label="Upload Data" isMini={isMini} />
         <SidebarLink to="/active-shipments" icon={<Database size={20} />} label="Active Shipments" isMini={isMini} />
         <SidebarLink to="/history-shipments" icon={<Clock size={20} />} label="History Shipments" isMini={isMini} />
-        <SidebarLink to="/aging-report" icon={<FileText size={20} />} label="Laporan Aging (+3 Hari)" isMini={isMini} />
+        <SidebarLink to="/aging-report" icon={<FileSpreadsheet size={20} />} label="Laporan Aging (+3 Hari)" isMini={isMini} />
         <SidebarLink to="/monitoring" icon={<Monitor size={20} />} label="Control Tower" isMini={isMini} />
-        <SidebarLink to="/daily-progress" icon={<BarChart3 size={20} />} label="Laporan Progress Harian" isMini={isMini} />
+        <SidebarLink to="/daily-progress" icon={<Activity size={20} />} label="Laporan Progress Harian" isMini={isMini} />
         <SidebarLink to="/sprinter-report" icon={<Map size={20} />} label="Monitoring POD Kurir" isMini={isMini} />
         <SidebarLink to="/tracking" icon={<Search size={20} />} label="Track Waybill" isMini={isMini} />
         <SidebarLink to="/auto-feedback" icon={<Zap size={20} />} label="Auto Feedback" isMini={isMini} />
         <SidebarLink to="/upload-pod" icon={<Truck size={20} />} label="Upload Bukti POD" isMini={isMini} />
         {user?.role === 'RM' && (
-           <SidebarLink to="/users" icon={<Users size={20} />} label="Manajemen User" isMini={isMini} />
+           <>
+             <SidebarLink to="/users" icon={<Users size={20} />} label="Manajemen User" isMini={isMini} />
+             <button className="sidebar-item" onClick={async () => {
+               if(window.confirm('PERINGATAN: Tindakan ini akan mengekspor database lokal ini dan mengirimkannya ke VPS Cloud untuk ditimpa. Lanjutkan?')) {
+                 try {
+                   const res = await fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/actions/run-sync-master', {
+                     method: 'POST',
+                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                   });
+                   const data = await res.json();
+                   if(data.success) {
+                     alert('Berhasil: ' + data.message);
+                   } else {
+                     alert('Gagal: ' + data.message);
+                   }
+                 } catch(e) {
+                   alert('Error menghubungi server: ' + e.message);
+                 }
+               }
+             }} style={{ justifyContent: isMini ? 'center' : 'flex-start', color: 'var(--warning)' }}>
+               <Zap size={20} />
+               {!isMini && <span>Deploy & Sync Master</span>}
+             </button>
+           </>
         )}
       </nav>
 

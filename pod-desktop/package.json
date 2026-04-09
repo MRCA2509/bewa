@@ -15,26 +15,22 @@
   "build": {
     "appId": "com.bewalogi.poddesktop",
     "productName": "BEWA Assisten DP",
+    "cscLink": null,
     "directories": {
       "output": "release"
     },
     "win": {
-      "target": ["nsis", "portable"]
-    },
-    "nsis": {
-      "oneClick": true,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": false,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "target": ["portable"]
     },
     "files": [
       "main.js",
       "server.js",
       "database.js",
+      ".env",
       "desktop/**/*",
       "public/**/*",
-      "package.json"
+      "package.json",
+      "node_modules/**/*"
     ]
   },
   "dependencies": {
