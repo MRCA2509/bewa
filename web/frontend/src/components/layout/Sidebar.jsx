@@ -32,65 +32,93 @@ export const Sidebar = ({ isMini, setIsMini }) => {
       
       {user && !isMini && (
         <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: 'center', 
-          padding: '1.5rem 1rem', 
-          marginBottom: '0.5rem', 
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
-          textAlign: 'center'
+          margin: '0 0.5rem 1.5rem 0.5rem',
+          padding: '1.25rem',
+          borderRadius: '1.25rem',
+          background: 'rgba(255, 255, 255, 0.03)',
+          border: '1px solid rgba(255, 255, 255, 0.05)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '0.75rem',
+          position: 'relative',
+          overflow: 'hidden'
         }}>
+          {/* Subtle glow background */}
           <div style={{ 
-            width: '48px', 
-            height: '48px', 
-            borderRadius: '50%', 
+            position: 'absolute', 
+            top: '-20px', 
+            right: '-20px', 
+            width: '60px', 
+            height: '60px', 
+            background: 'var(--primary)', 
+            filter: 'blur(30px)', 
+            opacity: 0.2 
+          }} />
+
+          <div style={{ 
+            width: '42px', 
+            height: '42px', 
+            borderRadius: '12px', 
             background: 'var(--accent-gradient)', 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
-            marginBottom: '0.75rem',
             boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
           }}>
-            <Users size={24} color="white" />
+            <Users size={20} color="white" />
           </div>
-          <div style={{ 
-            fontSize: '1.1rem', 
-            fontWeight: '900', 
-            color: 'white', 
-            marginBottom: '0.25rem',
-            width: '100%',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis'
-          }}>
-            {user.name}
-          </div>
-          <div style={{ 
-            fontSize: '0.7rem', 
-            color: 'var(--primary)', 
-            fontWeight: '700', 
-            textTransform: 'uppercase', 
-            letterSpacing: '0.1em' 
-          }}>
-            {user.role}
+          
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ 
+              fontSize: '0.95rem', 
+              fontWeight: '800', 
+              color: '#fff',
+              letterSpacing: '-0.01em',
+              marginBottom: '0.125rem'
+            }}>
+              {user.name}
+            </div>
+            <div style={{ 
+              fontSize: '0.65rem', 
+              color: 'var(--primary)', 
+              fontWeight: '700', 
+              textTransform: 'uppercase', 
+              letterSpacing: '0.15em',
+              opacity: 0.8
+            }}>
+              {user.role}
+            </div>
           </div>
         </div>
       )}
 
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, overflowY: 'auto' }}>
-        <SidebarLink to="/" icon={<LayoutDashboard size={20} />} label="Dashboard" isMini={isMini} />
-        <SidebarLink to="/upload" icon={<Upload size={20} />} label="Upload Data" isMini={isMini} />
-        <SidebarLink to="/active-shipments" icon={<Database size={20} />} label="Active Shipments" isMini={isMini} />
-        <SidebarLink to="/history-shipments" icon={<Clock size={20} />} label="History Shipments" isMini={isMini} />
-        <SidebarLink to="/aging-report" icon={<FileSpreadsheet size={20} />} label="Laporan Aging (+3 Hari)" isMini={isMini} />
-        <SidebarLink to="/monitoring" icon={<Monitor size={20} />} label="Control Tower" isMini={isMini} />
-        <SidebarLink to="/daily-progress" icon={<Activity size={20} />} label="Laporan Progress Harian" isMini={isMini} />
-        <SidebarLink to="/sprinter-report" icon={<Map size={20} />} label="Monitoring POD Kurir" isMini={isMini} />
-        <SidebarLink to="/tracking" icon={<Search size={20} />} label="Track Waybill" isMini={isMini} />
-        <SidebarLink to="/auto-feedback" icon={<Zap size={20} />} label="Auto Feedback" isMini={isMini} />
-        <SidebarLink to="/upload-pod" icon={<Truck size={20} />} label="Upload Bukti POD" isMini={isMini} />
+      <nav style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '2px', 
+        flex: 1, 
+        overflowY: 'auto'
+      }}>
+        <SidebarLink to="/" icon={<LayoutDashboard size={18} />} label="Dashboard" isMini={isMini} />
+        <SidebarLink to="/upload" icon={<Upload size={18} />} label="Upload Data" isMini={isMini} />
+        <SidebarLink to="/active-shipments" icon={<Database size={18} />} label="Active Shipments" isMini={isMini} />
+        <SidebarLink to="/history-shipments" icon={<Clock size={18} />} label="History Shipments" isMini={isMini} />
+        <SidebarLink to="/aging-report" icon={<FileSpreadsheet size={18} />} label="Laporan Aging (+3 Hari)" isMini={isMini} />
+        <SidebarLink to="/monitoring" icon={<Monitor size={18} />} label="Control Tower" isMini={isMini} />
+        <SidebarLink to="/daily-progress" icon={<Activity size={18} />} label="Laporan Progress Harian" isMini={isMini} />
+        <SidebarLink to="/sprinter-report" icon={<Map size={18} />} label="Monitoring POD Kurir" isMini={isMini} />
+        <SidebarLink to="/tracking" icon={<Search size={18} />} label="Track Waybill" isMini={isMini} />
+        <SidebarLink to="/auto-feedback" icon={<Zap size={18} />} label="Auto Feedback" isMini={isMini} />
+        <SidebarLink to="/upload-pod" icon={<Truck size={18} />} label="Upload Bukti POD" isMini={isMini} />
         {user?.role === 'RM' && (
            <>
-             <SidebarLink to="/users" icon={<Users size={20} />} label="Manajemen User" isMini={isMini} />
+             <div style={{ 
+               height: '1px', 
+               background: 'rgba(255,255,255,0.05)', 
+               margin: '0.75rem 1rem' 
+             }} />
+             <SidebarLink to="/users" icon={<Users size={18} />} label="Manajemen User" isMini={isMini} />
              <button className="sidebar-item" onClick={async () => {
                if(window.confirm('PERINGATAN: Tindakan ini akan mengekspor database lokal ini dan mengirimkannya ke VPS Cloud untuk ditimpa. Lanjutkan?')) {
                  try {
@@ -109,7 +137,7 @@ export const Sidebar = ({ isMini, setIsMini }) => {
                  }
                }
              }} style={{ justifyContent: isMini ? 'center' : 'flex-start', color: 'var(--warning)' }}>
-               <Zap size={20} />
+               <Zap size={18} />
                {!isMini && <span>Deploy & Sync Master</span>}
              </button>
            </>

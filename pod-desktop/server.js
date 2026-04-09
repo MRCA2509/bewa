@@ -7,6 +7,7 @@ const fs = require('fs');
 const archiver = require('archiver');
 const axios = require('axios'); // We installed axios
 const { app: electronApp } = require('electron');
+const { exec } = require('child_process');
 const db = require('./database');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
@@ -90,6 +91,27 @@ app.post('/api/desktop/log', (req, res) => {
   const { message, type } = req.body;
   if (message) writeLog(`[UI_CLIENT] ${message}`, type ? type.toUpperCase() : 'UI_INFO');
   res.json({ success: true });
+});
+
+// API to check environment health
+app.post('/api/desktop/run-sync-master', (req, res) => {
+  const projectRoot = path.join(__dirname, '..');
+  const batPath = path.join(projectRoot, 'deploy.bat');
+  
+  writeLog('Manual Master Sync triggered from Desktop UI', 'ACTION');
+  
+  if (process.platform === 'win32') {
+    // Jalankan deploy.bat di window baru
+    exec(`start "BEWA LOGISTICS - Master Sync" cmd /k "${batPath}"`, (error) => {
+      if (error) {
+        writeLog(`Failed to trigger sync: ${error.message}`, 'ERROR');
+        return res.status(500).json({ success: false, message: error.message });
+      }
+      res.json({ success: true, message: 'Sync process started in new window' });
+    });
+  } else {
+    res.status(400).json({ success: false, message: 'Feature only available on Windows local node' });
+  }
 });
 
 // API to check environment health

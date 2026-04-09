@@ -38,10 +38,18 @@ def deploy_to_vps_and_db(sql_file):
         print(f"[!] Gagal koneksi SSH: {e}")
         sys.exit(1)
         
+    def progress_callback(transferred, total):
+        percent = (transferred / total) * 100
+        # Menggunakan carriage return \r untuk menimpa baris yang sama agar bersih
+        sys.stdout.write(f"\r      -> Progress Upload: {percent:.1f}% ({transferred/(1024*1024):.1f} MB / {total/(1024*1024):.1f} MB)")
+        sys.stdout.flush()
+
     sftp = client.open_sftp()
     remote_sql_path = f"/var/www/bewa/{sql_file}"
-    print("      -> Mentransfer file SQL ke VPS...")
-    sftp.put(sql_file, remote_sql_path)
+    print(f"      -> Mentransfer file SQL ({os.path.getsize(sql_file)/(1024*1024):.1f} MB) ke VPS...")
+    
+    sftp.put(sql_file, remote_sql_path, callback=progress_callback)
+    print("\n      -> Upload Selesai!")
     sftp.close()
 
     script = f"""
