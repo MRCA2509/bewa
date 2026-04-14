@@ -144,6 +144,45 @@
         touch-action: none;
     }
 
+    /* Toast Notifications */
+    .toast-container {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .toast {
+        min-width: 320px;
+        background: white;
+        padding: 16px 20px;
+        border-radius: 18px;
+        box-shadow: 0 15px 30px -5px rgba(0,0,0,0.1), 0 5px 15px -5px rgba(0,0,0,0.05);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        border: 1px solid rgba(0,0,0,0.03);
+        animation: toast-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        transition: all 0.3s ease;
+    }
+    @keyframes toast-in {
+        from { transform: translateX(100%) scale(0.8); opacity: 0; }
+        to { transform: translateX(0) scale(1); opacity: 1; }
+    }
+    .toast.hide {
+        transform: translateX(120%) scale(0.9);
+        opacity: 0;
+    }
+    .toast-icon { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-center; }
+    .toast-success .toast-icon { background: #ecfdf5; color: #10b981; }
+    .toast-info .toast-icon { background: #eff6ff; color: #3b82f6; }
+    .toast-error .toast-icon { background: #fef2f2; color: #ef4444; }
+    .toast-content { flex: 1; }
+    .toast-title { font-weight: 800; font-size: 13px; color: #1e293b; text-transform: uppercase; letter-spacing: 0.02em; }
+    .toast-message { font-size: 11px; color: #64748b; margin-top: 1px; }
+
   </style>
 </head>
 <body class="bg-[#f3f4f6]">
@@ -159,6 +198,7 @@
     <div class="watermark-item">AG23 - Max Robert Cirus Aiba 04-11</div>
     <div class="watermark-item">AG23 - Max Robert Cirus Aiba 04-11</div>
   </div>
+  <div id="toast-container" class="toast-container"></div>
 
   <!-- INIT OVERLAY -->
   <div id="init-overlay" class="fixed inset-0 bg-[#0f172a] z-[100] flex flex-col items-center justify-center transition-opacity duration-700">
@@ -284,12 +324,11 @@
                  <div class="overflow-x-auto">
                     <table class="w-full text-left">
                        <thead>
-                          <tr class="text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-gray-50 bg-gray-50/30">
-                             <th class="p-6 pl-10">Nama Sprinter</th>
-                             <th class="p-6 text-center">Tugas Selesai</th>
-                             <th class="p-6">Progress</th>
-                             <th class="p-6 pr-10 text-right">Status</th>
-                          </tr>
+                          <tr class="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b-2 border-slate-100 bg-slate-50/50">
+                              <th class="p-8 pl-12 border-r border-slate-100">Nama Sprinter</th>
+                              <th class="p-8 text-center border-r border-slate-100">Manifest Selesai</th>
+                              <th class="p-8">Progress Pengambilan</th>
+                           </tr>
                        </thead>
                        <tbody id="table-body" class="text-sm font-bold text-slate-700"></tbody>
                     </table>
@@ -334,13 +373,13 @@
                 <div class="overflow-x-auto flex-1">
                    <table class="w-full text-left">
                       <thead>
-                         <tr class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-gray-50 bg-gray-50/20">
-                            <th class="p-8 pl-12">Waybill / Nama</th>
-                            <th class="p-8">Sprinter</th>
-                            <th class="p-8">Tgl Sampai</th>
-                            <th class="p-8 text-center">Umur Paket</th>
-                            <th class="p-8 pr-12 text-right">Aksi</th>
-                         </tr>
+                         <tr class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] border-b-2 border-slate-200 bg-slate-50">
+                             <th class="p-10 pl-14 border-r border-slate-200">WAYBILL / NAMA</th>
+                             <th class="p-10 border-r border-slate-200">DATA SPRINTER</th>
+                             <th class="p-10 border-r border-slate-200">TGL TIBA STASIUN</th>
+                             <th class="p-10 text-center border-r border-slate-200">AGING (HARI)</th>
+                             <th class="p-10 pr-14 text-right">AKSI OPERASIONAL</th>
+                          </tr>
                       </thead>
                       <tbody id="mgmt-table-body" class="text-sm font-bold text-slate-700"></tbody>
                    </table>
@@ -880,14 +919,12 @@
             document.getElementById('stat-completed').textContent = s.completed || 0;
             document.getElementById('stat-rejected').textContent = s.rejected || 0;
 
-            const tbody = document.getElementById('table-body');
             tbody.innerHTML = res.data.sprinters.map(spr => {
                 const pb = spr.total_tasks > 0 ? (spr.completed_tasks / spr.total_tasks) * 100 : 0;
-                return `<tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                    <td class="p-6 pl-10"><p class="font-black text-slate-800 tracking-tight">${spr.sprinter_name}</p><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${spr.sprinter_code}</p></td>
-                    <td class="p-6 text-center"><span class="px-4 py-1.5 bg-gray-100 rounded-xl font-black text-[11px] text-blue-600">${spr.completed_tasks} <span class="text-slate-300 mx-1">/</span> <span class="text-slate-400">${spr.total_tasks}</span></span></td>
-                    <td class="p-6"><div class="flex items-center gap-4"><div class="flex-1 bg-gray-100 h-2 rounded-full overflow-hidden w-24"><div class="h-full bg-blue-500" style="width: ${pb}%"></div></div><span class="text-[10px] font-black text-slate-400">${Math.round(pb)}%</span></div></td>
-                    <td class="p-6 text-right pr-10 min-w-[200px]"><span class="text-[9px] font-black text-emerald-500 border border-emerald-100 bg-emerald-50 px-4 py-1.5 rounded-lg uppercase tracking-widest">OPERATIONAL</span></td>
+                return `<tr class="border-b-2 border-slate-50 hover:bg-blue-50/30 transition">
+                    <td class="p-8 pl-12 border-r border-slate-50"><p class="font-black text-slate-900 tracking-tight text-lg">${spr.sprinter_name}</p><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${spr.sprinter_code}</p></td>
+                    <td class="p-8 text-center border-r border-slate-50"><span class="px-6 py-2.5 bg-slate-100 rounded-2xl font-black text-[13px] text-slate-800">${spr.completed_tasks} <span class="text-slate-300 mx-1">/</span> <span class="text-slate-900">${spr.total_tasks}</span></span></td>
+                    <td class="p-8"><div class="flex items-center gap-6"><div class="flex-1 bg-slate-100 h-3 rounded-full overflow-hidden shrink-0"><div class="h-full bg-blue-600 shadow-sm" style="width: ${pb}%"></div></div><span class="text-[12px] font-black text-slate-900 w-12">${Math.round(pb)}%</span></div></td>
                 </tr>`;
             }).join('');
 
@@ -952,12 +989,12 @@
             const res = await axios.get(`http://localhost:${serverPort}/api/desktop/outstanding?page=${page}&search=${search}&dropPoint=${encodeURIComponent(dp)}`);
 
             const tbody = document.getElementById('mgmt-table-body');
-            tbody.innerHTML = res.data.data.map(t => `<tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                  <td class="p-8 pl-12"><p class="font-black text-slate-800 text-lg tracking-tighter">${t.waybill_id}</p><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${t.nama_penerima_resi || '-'}</p></td>
-                  <td class="p-8 text-xs font-black uppercase text-slate-500">${t.sprinter_name || '-'}</td>
-                  <td class="p-8 text-xs font-bold text-slate-400 font-mono">${t.waktu_sampai || '-'}</td>
-                  <td class="p-8 text-center"><span class="px-4 py-1.5 bg-gray-100 rounded-xl font-black text-xs text-slate-700 shadow-inner">${t.umur_paket || 0} HARI</span></td>
-                  <td class="p-8 pr-12 text-right"><span class="text-[10px] font-black text-orange-500 bg-orange-50 px-4 py-1.5 rounded-lg border border-orange-100 uppercase tracking-widest">PENDING</span></td>
+            tbody.innerHTML = res.data.data.map(t => `<tr class="border-b-4 border-slate-50 hover:bg-blue-50/10 transition group">
+                  <td class="p-10 pl-14 border-r border-slate-100 bg-white group-hover:bg-slate-50"><p class="font-black text-slate-900 text-xl tracking-tighter">${t.waybill_id}</p><p class="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">${t.nama_penerima_resi || '-'}</p></td>
+                  <td class="p-10 text-xs font-black uppercase text-slate-700 border-r border-slate-100 font-bold">${t.sprinter_name || '-'}</td>
+                  <td class="p-10 text-sm font-bold text-slate-500 font-mono border-r border-slate-100">${t.waktu_sampai || '-'}</td>
+                  <td class="p-10 text-center border-r border-slate-100"><span class="px-6 py-3 bg-red-50 rounded-2xl font-black text-sm text-red-600 border border-red-100">${t.umur_paket || 0} HARI</span></td>
+                  <td class="p-10 pr-14 text-right"><span class="text-[11px] font-black text-orange-500 bg-orange-50 px-6 py-3 rounded-xl border-2 border-orange-100 uppercase tracking-widest shadow-sm">WAITING AUDIT</span></td>
                </tr>`).join('');
             document.getElementById('mgmt-pager-info').textContent = `${((page-1)*20)+1} - ${Math.min(page*20, res.data.total)} OF ${res.data.total} RECORDS`;
             document.getElementById('mgmt-prev-btn').disabled = page <= 1;
@@ -1040,16 +1077,71 @@
         if (!reason) return;
         try { const res = await axios.post(`http://localhost:${serverPort}/api/desktop/reject`, { waybill_id: wb, reason }); if (res.data.success) { loadStats(); } } catch (e) { alert("Error Reject"); }
     }
+    function showToast(title, message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        
+        const icons = {
+            success: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>',
+            info: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+            error: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>'
+        };
+
+        toast.innerHTML = `
+            <div class="toast-icon flex items-center justify-center">${icons[type]}</div>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+        `;
+
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('hide');
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+
+    async function handleDownload(url, filename) {
+        showToast("Mempersiapkan File", "Mohon tunggu sebentar, sistem sedang memproses data...", "info");
+        try {
+            const response = await axios({
+                url: url,
+                method: 'GET',
+                responseType: 'blob'
+            });
+            const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(blobUrl);
+            showToast("Berhasil", "File telah berhasil disimpan ke folder download Anda.", "success");
+        } catch (e) {
+            console.error(e);
+            showToast("Gagal", "Terjadi kesalahan saat mengunduh file. Harap coba lagi.", "error");
+        }
+    }
+
     function downloadOutstandingExcel() { 
-        window.location.href = `http://localhost:${serverPort}/api/desktop/export-outstanding`; 
+        handleDownload(`http://localhost:${serverPort}/api/desktop/export-outstanding`, "Rekap_Outstanding.xlsx");
     }
     
     function downloadUnifiedValidated() { 
-        window.location.href = `http://localhost:${serverPort}/api/desktop/export-bundled-validated`; 
+        handleDownload(`http://localhost:${serverPort}/api/desktop/export-bundled-validated`, "Paket_Data_Validasi.zip");
     }
 
-    function downloadZip() { const dp = document.getElementById('drop-point-select').value; window.location.href = `http://localhost:${serverPort}/api/desktop/download-zip?dropPoint=${encodeURIComponent(dp)}`; }
-    function downloadValidatedExcel() { window.location.href = `http://localhost:${serverPort}/api/desktop/export-validated`; }
+    function downloadZip() { 
+        const dp = document.getElementById('drop-point-select').value; 
+        handleDownload(`http://localhost:${serverPort}/api/desktop/download-zip?dropPoint=${encodeURIComponent(dp)}`, "Arsip_POD_Fisik.zip");
+    }
+    
+    function downloadValidatedExcel() { 
+        handleDownload(`http://localhost:${serverPort}/api/desktop/export-validated`, "Laporan_Validated.xlsx");
+    }
 
     async function handleExcelUpload(event) {
         const file = event.target.files[0]; if (!file) return;
