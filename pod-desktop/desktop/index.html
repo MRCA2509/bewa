@@ -325,9 +325,9 @@
                     <table class="w-full text-left">
                        <thead>
                           <tr class="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b-2 border-slate-100 bg-slate-50/50">
-                              <th class="p-8 pl-12 border-r border-slate-100">Nama Sprinter</th>
-                              <th class="p-8 text-center border-r border-slate-100">Manifest Selesai</th>
-                              <th class="p-8">Progress Pengambilan</th>
+                              <th class="p-8 pl-12 border-r border-slate-100">NAMA SPRINTER</th>
+                              <th class="p-8 text-center border-r border-slate-100">TOTAL AWB POD</th>
+                              <th class="p-8">PROGRESS POD</th>
                            </tr>
                        </thead>
                        <tbody id="table-body" class="text-sm font-bold text-slate-700"></tbody>
@@ -374,11 +374,10 @@
                    <table class="w-full text-left">
                       <thead>
                          <tr class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] border-b-2 border-slate-200 bg-slate-50">
-                             <th class="p-10 pl-14 border-r border-slate-200">WAYBILL / NAMA</th>
-                             <th class="p-10 border-r border-slate-200">DATA SPRINTER</th>
-                             <th class="p-10 border-r border-slate-200">TGL TIBA STASIUN</th>
-                             <th class="p-10 text-center border-r border-slate-200">AGING (HARI)</th>
-                             <th class="p-10 pr-14 text-right">AKSI OPERASIONAL</th>
+                             <th class="p-8 pl-14">NOMOR WAYBILL</th>
+                             <th class="p-8">SPRINTER DELIVERY</th>
+                             <th class="p-8">TANGGAL SAMPAI</th>
+                             <th class="p-8 text-center">AGING</th>
                           </tr>
                       </thead>
                       <tbody id="mgmt-table-body" class="text-sm font-bold text-slate-700"></tbody>
@@ -923,8 +922,8 @@
             tbody.innerHTML = res.data.sprinters.map(spr => {
                 const pb = spr.total_tasks > 0 ? (spr.completed_tasks / spr.total_tasks) * 100 : 0;
                 return `<tr class="border-b-2 border-slate-50 hover:bg-blue-50/30 transition">
-                    <td class="p-8 pl-12 border-r border-slate-50"><p class="font-black text-slate-900 tracking-tight text-lg">${spr.sprinter_name}</p><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${spr.sprinter_code}</p></td>
-                    <td class="p-8 text-center border-r border-slate-50"><span class="px-6 py-2.5 bg-slate-100 rounded-2xl font-black text-[13px] text-slate-800">${spr.completed_tasks} <span class="text-slate-300 mx-1">/</span> <span class="text-slate-900">${spr.total_tasks}</span></span></td>
+                    <td class="p-8 pl-12 "><p class="font-black text-slate-900 tracking-tight text-lg">${spr.sprinter_name}</p><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${spr.sprinter_code}</p></td>
+                    <td class="p-8 text-center "><span class="px-6 py-2.5 bg-slate-100 rounded-2xl font-black text-[13px] text-slate-800">${spr.completed_tasks} <span class="text-slate-300 mx-1">/</span> <span class="text-slate-900">${spr.total_tasks}</span></span></td>
                     <td class="p-8"><div class="flex items-center gap-6"><div class="flex-1 bg-slate-100 h-3 rounded-full overflow-hidden shrink-0"><div class="h-full bg-blue-600 shadow-sm" style="width: ${pb}%"></div></div><span class="text-[12px] font-black text-slate-900 w-12">${Math.round(pb)}%</span></div></td>
                 </tr>`;
             }).join('');
@@ -990,12 +989,11 @@
             const res = await axios.get(`http://localhost:${serverPort}/api/desktop/outstanding?page=${page}&search=${search}&dropPoint=${encodeURIComponent(dp)}`);
 
             const tbody = document.getElementById('mgmt-table-body');
-            tbody.innerHTML = res.data.data.map(t => `<tr class="border-b-4 border-slate-50 hover:bg-slate-50 transition group">
-                  <td class="p-8 pl-14 border-r border-slate-100 bg-white"><p class="font-black text-slate-900 text-xl tracking-tighter">${t.waybill_id}</p><p class="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">${t.nama_penerima_resi || "-"}</p></td>
-                  <td class="p-8 text-xs font-black uppercase text-slate-700 border-r border-slate-100">${t.sprinter_name || "-"}</td>
-                  <td class="p-8 text-sm font-bold text-slate-500 font-mono border-r border-slate-100">${t.waktu_sampai || "-"}</td>
-                  <td class="p-8 text-center border-r border-slate-100"><span class="inline-block px-5 py-2.5 bg-red-50 rounded-2xl font-black text-xs text-red-600 border border-red-100 shadow-sm">${t.umur_paket || 0} HARI</span></td>
-                  <td class="p-8 pr-14 text-right"><span class="inline-block px-6 py-3 bg-orange-50 text-orange-600 rounded-xl border-2 border-orange-100 font-black text-[10px] uppercase tracking-widest shadow-sm">WAITING AUDIT</span></td>
+            tbody.innerHTML = res.data.data.map(t => `<tr class="border-b border-slate-100 hover:bg-blue-50/20 transition group">
+                  <td class="p-6 pl-14 bg-white group-hover:bg-transparent"><p class="font-black text-slate-900 text-lg tracking-tighter">${t.waybill_id}</p><p class="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">${t.nama_penerima_resi || "-"}</p></td>
+                  <td class="p-6 text-xs font-black uppercase text-slate-700 font-bold">${t.sprinter_name || "-"}</td>
+                  <td class="p-6 text-sm font-bold text-slate-500 font-mono">${t.waktu_sampai || "-"}</td>
+                  <td class="p-6 text-center"><span class="inline-block px-5 py-2 bg-red-50 rounded-xl font-black text-[11px] text-red-600 border border-red-100">${t.umur_paket || 0} HARI</span></td>
                </tr>`).join("");
             document.getElementById('mgmt-pager-info').textContent = `${((page-1)*20)+1} - ${Math.min(page*20, res.data.total)} OF ${res.data.total} RECORDS`;
             document.getElementById('mgmt-prev-btn').disabled = page <= 1;
