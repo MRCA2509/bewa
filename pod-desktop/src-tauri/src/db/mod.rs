@@ -12,8 +12,8 @@ pub fn init_db() -> Result<Connection> {
     let data_dir = get_local_dir().join("data");
     let uploads_dir = get_local_dir().join("uploads");
     
-    if !data_dir.exists() { std::fs::create_dir_all(&data_dir).unwrap(); }
-    if !uploads_dir.exists() { std::fs::create_dir_all(&uploads_dir).unwrap(); }
+    if !data_dir.exists() { std::fs::create_dir_all(&data_dir).expect("Failed to create data directory"); }
+    if !uploads_dir.exists() { std::fs::create_dir_all(&uploads_dir).expect("Failed to create uploads directory"); }
     
     let db_path = data_dir.join("local.db");
     println!("[DB] Initializing database at: {:?}", db_path.canonicalize().unwrap_or(db_path.clone()));

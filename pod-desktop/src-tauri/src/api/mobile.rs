@@ -17,10 +17,10 @@ pub struct MobileTasks {
 }
 
 pub async fn mobile_login(AxumJson(payload): AxumJson<MobileLogin>) -> Json<Value> {
-    let conn = db::init_db().unwrap();
+    let conn = db::init_db().expect("Database connection failed in mobile_login");
     println!("[MOBILE] Login attempt with code: {}", payload.code);
     
-    let mut stmt = conn.prepare("SELECT sprinter_name FROM assignments WHERE sprinter_code = ? LIMIT 1").unwrap();
+    let mut stmt = conn.prepare("SELECT sprinter_name FROM assignments WHERE sprinter_code = ? LIMIT 1").expect("Failed to prepare login query");
     let name: Result<String, _> = stmt.query_row([&payload.code], |row| row.get(0));
     
     if let Ok(sprinter_name) = name {
@@ -31,7 +31,7 @@ pub async fn mobile_login(AxumJson(payload): AxumJson<MobileLogin>) -> Json<Valu
 }
 
 pub async fn tasks(Query(params): Query<MobileTasks>) -> Json<Value> {
-    let conn = db::init_db().unwrap();
+    let conn = db::init_db().expect("Database connection failed in mobile tasks");
     println!("[MOBILE] Fetching tasks for code: {}", params.code);
     
     match crate::db::queries::get_sprinter_tasks(&conn, &params.code) {
@@ -41,7 +41,7 @@ pub async fn tasks(Query(params): Query<MobileTasks>) -> Json<Value> {
 }
 
 pub async fn upload_pod(mut multipart: Multipart) -> Json<Value> {
-    let conn = db::init_db().unwrap();
+    let conn = db::init_db().expect("Database connection failed in upload_pod");
     let mut waybill = String::new();
     let mut img1_path = String::new();
     let mut img2_path = String::new();
@@ -51,10 +51,19 @@ pub async fn upload_pod(mut multipart: Multipart) -> Json<Value> {
         if name == "waybill" {
             waybill = field.text().await.unwrap_or_default();
         } else if name == "image1" || name == "image2" {
-            let data = field.bytes().await.unwrap();
+            let data = match field.bytes().await {
+                Ok(b) => b,
+                Err(e) => {
+                    println!("[ERR] Failed to read multipart bytes: {}", e);
+                    continue;
+                }
+            };
             let filename = format!("{}_{}_{}.jpg", waybill, name, uuid::Uuid::new_v4());
             let filepath = db::get_local_dir().join("uploads").join(&filename);
-            tokio::fs::write(&filepath, data).await.unwrap();
+            if let Err(e) = tokio::fs::write(&filepath, data).await {
+                println!("[ERR] Failed to write image to disk: {}", e);
+                continue;
+            }
             if name == "image1" { img1_path = filename; } else { img2_path = filename; }
         }
     }

@@ -5,6 +5,7 @@ mod api;
 mod db;
 mod utils;
 mod server;
+mod constants;
 
 use tauri::State;
 

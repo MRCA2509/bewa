@@ -15,7 +15,7 @@ pub async fn config() -> Json<Value> {
         "success": true,
         "mode": "RUST_AXUM_MODULAR",
         "localIp": ip_str,
-        "allowedDps": ["MABA", "BULI", "WASILE", "SOFIFI", "LABUHA", "FALAJAWA2", "SANANA", "BOBONG"]
+        "allowedDps": crate::constants::ALLOWED_DROP_POINTS
     }))
 }
 
@@ -31,12 +31,12 @@ pub async fn health() -> Json<Value> {
 pub async fn list_drop_points() -> Json<Value> {
     Json(json!({
         "success": true,
-        "data": ["MABA", "BULI", "WASILE", "SOFIFI", "LABUHA", "FALAJAWA2", "SANANA", "BOBONG"]
+        "data": crate::constants::ALLOWED_DROP_POINTS
     }))
 }
 
 pub async fn stats(Query(params): Query<HashMap<String, String>>) -> Json<Value> {
-    let conn = crate::db::init_db().unwrap();
+    let conn = crate::db::init_db().expect("Database connection failed in stats");
     let dp_filter = params.get("dropPoint").filter(|s| !s.is_empty() && s.as_str() != "undefined" && s.as_str() != "null").map(|s| s.as_str());
     println!("[API] stats - Filters: dp_filter={:?}", dp_filter);
     
@@ -141,8 +141,8 @@ pub async fn login(axum::Json(payload): axum::Json<Value>) -> Json<Value> {
     let username = payload.get("username").and_then(|v| v.as_str()).unwrap_or("").to_lowercase();
     let password = payload.get("password").and_then(|v| v.as_str()).unwrap_or("");
     
-    // Whitelist Drop Points check
-    let allowed_dps = vec!["MABA", "BULI", "WASILE", "SOFIFI", "LABUHA", "FALAJAWA2", "SANANA", "BOBONG", "SULTAN_BABULLAH"];
+    // Whitelist Drop Points check from global constants
+    let allowed_dps = crate::constants::ALLOWED_DROP_POINTS;
     
     if username == "admin" && (password == "admin123" || password == "123") {
         let conn = crate::db::init_db().unwrap();
@@ -181,7 +181,7 @@ pub async fn login(axum::Json(payload): axum::Json<Value>) -> Json<Value> {
 pub async fn reset_data(headers: axum::http::HeaderMap) -> Json<Value> {
     let role = headers.get("x-user-role").and_then(|h| h.to_str().ok()).unwrap_or("Master");
     let dp_filter = headers.get("x-user-dp").and_then(|h| h.to_str().ok());
-    let conn = crate::db::init_db().unwrap();
+    let conn = crate::db::init_db().expect("Database connection failed for reset");
 
     let msg = if role == "Master" {
         let _ = crate::db::queries::reset_assignments(&conn, None);
