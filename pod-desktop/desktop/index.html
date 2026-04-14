@@ -915,7 +915,7 @@
         currentReviewWb = wb;
         document.getElementById('review-wb-info').textContent = `WB: ${wb} | SPRINTER: ${spr}`;
         // Important: paths come already decoded from the args if not passed through encodeURIComponent in onclick
-        document.getElementById('view-img1').src = `http://localhost:${serverPort}/api/desktop/view-image?path=${encodeURIComponent(img1)}`;
+        document.getElementById('view-img1').src = `http://localhost:${serverPort}/api/desktop/view-image?path=${encodeURIComponent(img1)}&t=${Date.now()}`;
         
         paintStates[1].fileName = img1;
         document.getElementById('review-modal').classList.remove('hidden');
@@ -939,7 +939,7 @@
     function openLightboxByIndex(idx, isPOD) {
         const t = currentTasks[idx];
         if (!t) return;
-        const imgUrl = `http://localhost:${serverPort}/api/desktop/view-image?path=${encodeURIComponent(isPOD ? t.pod_image1 : t.pod_image2)}`;
+        const imgUrl = `http://localhost:${serverPort}/api/desktop/view-image?path=${encodeURIComponent(isPOD ? t.pod_image1 : t.pod_image2)}&t=${Date.now()}`;
         openLightbox(imgUrl, isPOD, t.waybill_id, t.pod_image1, t.pod_image2, t.sprinter_name);
     }
 
