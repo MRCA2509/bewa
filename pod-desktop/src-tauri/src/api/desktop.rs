@@ -4,6 +4,7 @@ use local_ip_address::local_ip;
 use axum::extract::Query;
 use std::collections::HashMap;
 use axum::response::IntoResponse;
+use std::io::{Write, Cursor, Read};
 
 pub async fn config() -> Json<Value> {
     let mut ip_str = "localhost".to_string();
@@ -210,7 +211,7 @@ use rust_xlsxwriter::{Workbook, Format, Color};
 
 pub async fn export_outstanding() -> impl axum::response::IntoResponse {
     let conn = crate::db::init_db().unwrap();
-    let (waybills, _total) = crate::db::queries::get_outstanding(&conn, None, None, 1).unwrap_or((vec![], 0));
+    let waybills = crate::db::queries::get_all_outstanding(&conn).unwrap_or(vec![]);
 
     let mut workbook = Workbook::new();
     let worksheet = workbook.add_worksheet();
@@ -281,6 +282,86 @@ pub async fn export_validated() -> impl axum::response::IntoResponse {
             (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"Laporan_POD_Validated.xlsx\""),
         ],
         buf,
+    )
+}
+
+pub async fn unified_export_validated() -> impl axum::response::IntoResponse {
+    let conn = crate::db::init_db().unwrap();
+    let mut stmt = conn.prepare("SELECT waybill_id, sprinter_name, pod_image1, pod_image2 FROM assignments WHERE status = 'VALIDATED' ORDER BY updated_at DESC").unwrap();
+    
+    let rows: Vec<(String, String, String, String)> = stmt.query_map([], |row| {
+        Ok((
+            row.get::<_, String>(0)?,
+            row.get::<_, String>(1)?,
+            row.get::<_, Option<String>>(2)?.unwrap_or_default(),
+            row.get::<_, Option<String>>(3)?.unwrap_or_default(),
+        ))
+    }).unwrap().filter_map(|r| r.ok()).collect();
+
+    // 1. Create Excel
+    let mut workbook = Workbook::new();
+    let worksheet = workbook.add_worksheet();
+    let header_format = Format::new().set_bold().set_font_color(Color::Blue);
+    worksheet.write_with_format(0, 0, "No. Waybill", &header_format).unwrap();
+    worksheet.write_with_format(0, 1, "Nama Sprinter", &header_format).unwrap();
+    worksheet.write_with_format(0, 2, "Path Foto POD", &header_format).unwrap();
+    worksheet.write_with_format(0, 3, "Path Foto Fisik", &header_format).unwrap();
+
+    for (i, (wb, name, img1, img2)) in rows.iter().enumerate() {
+        let row_idx = (i + 1) as u32;
+        worksheet.write(row_idx, 0, wb).unwrap();
+        worksheet.write(row_idx, 1, name).unwrap();
+        worksheet.write(row_idx, 2, img1).unwrap();
+        worksheet.write(row_idx, 3, img2).unwrap();
+    }
+    let excel_buf = workbook.save_to_buffer().unwrap();
+
+    // 2. Create ZIP
+    let mut zip_buf = Vec::new();
+    {
+        let cursor = Cursor::new(&mut zip_buf);
+        let mut zip = zip::ZipWriter::new(cursor);
+        let options = zip::write::FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+
+        // Add Excel
+        let _ = zip.start_file("Laporan_Validated.xlsx", options);
+        let _ = zip.write_all(&excel_buf);
+
+        // Add Images
+        let uploads_dir = crate::db::get_local_dir().join("uploads");
+        for (_, _, img1, img2) in rows {
+            if !img1.is_empty() {
+                let p = uploads_dir.join(&img1);
+                if p.exists() {
+                    if let Ok(mut f) = std::fs::File::open(p) {
+                        let mut contents = Vec::new();
+                        let _ = f.read_to_end(&mut contents);
+                        let _ = zip.start_file(format!("POD/{}", img1), options);
+                        let _ = zip.write_all(&contents);
+                    }
+                }
+            }
+            if !img2.is_empty() {
+                let p = uploads_dir.join(&img2);
+                if p.exists() {
+                    if let Ok(mut f) = std::fs::File::open(p) {
+                        let mut contents = Vec::new();
+                        let _ = f.read_to_end(&mut contents);
+                        let _ = zip.start_file(format!("FISIK/{}", img2), options);
+                        let _ = zip.write_all(&contents);
+                    }
+                }
+            }
+        }
+        let _ = zip.finish();
+    }
+
+    (
+        [
+            (axum::http::header::CONTENT_TYPE, "application/zip"),
+            (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=\"Paket_Data_Validasi.zip\""),
+        ],
+        zip_buf,
     )
 }
 

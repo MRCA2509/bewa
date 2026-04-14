@@ -7,7 +7,9 @@ use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
 use crate::api;
 
-pub async fn run() {
+use tokio::sync::oneshot;
+
+pub async fn run(tx: oneshot::Sender<u16>) {
     let app = Router::new()
         // Desktop API Routes
         .route("/api/desktop/config", get(api::desktop::config))
@@ -25,6 +27,7 @@ pub async fn run() {
         .route("/api/desktop/import-excel", post(api::desktop::upload_excel))
         .route("/api/desktop/export-outstanding", get(api::desktop::export_outstanding))
         .route("/api/desktop/export-validated", get(api::desktop::export_validated))
+        .route("/api/desktop/export-bundled-validated", get(api::desktop::unified_export_validated))
         .route("/api/desktop/download-zip", get(api::desktop::download_archive))
         .route("/api/desktop/save-image", post(api::desktop::save_image))
 
@@ -46,9 +49,21 @@ pub async fn run() {
         // CORS Middleware
         .layer(CorsLayer::permissive());
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
-    println!("Server HTTP Modular Axum Berjalan: http://{}", addr);
+    let mut port = 3000;
+    let listener = loop {
+        let addr = SocketAddr::from(([0, 0, 0, 0], port));
+        match tokio::net::TcpListener::bind(addr).await {
+            Ok(l) => {
+                println!("Server HTTP Modular Axum Berjalan: http://{}", addr);
+                break l;
+            }
+            Err(_) => {
+                port += 1;
+            }
+        }
+    };
 
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    let _ = tx.send(port);
+
     axum::serve(listener, app).await.unwrap();
 }

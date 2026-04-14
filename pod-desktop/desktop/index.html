@@ -304,9 +304,9 @@
                    <h2 class="text-4xl font-black text-slate-800 tracking-tighter">Management Data (Outstanding)</h2>
                    <p class="text-slate-400 font-bold uppercase tracking-widest text-[11px] mt-2">Daftar resi pending dan kontrol reset database harian</p>
                 </div>
-                <button onclick="downloadZip()" class="flex items-center gap-4 bg-[#10b981] hover:bg-[#059669] text-white px-8 py-5 rounded-2xl shadow-xl shadow-emerald-200 transition active:scale-95">
+                <button onclick="downloadOutstandingExcel()" class="flex items-center gap-4 bg-[#10b981] hover:bg-[#059669] text-white px-8 py-5 rounded-2xl shadow-xl shadow-emerald-200 transition active:scale-95">
                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M21.17 3.25q.33 0 .59.25.24.24.24.58v15.84q0 .34-.24.58-.26.25-.59.25H7.83q-.34 0-.58-.25-.25-.24-.25-.58V18H3.17q-.33 0-.58-.24-.25-.26-.25-.59V6.83q0-.33.25-.59.25-.24.58-.24H7V4.08q0-.34.25-.58.24-.25.58-.25h12.51zm.83 1.17V4.08h-11.5v2.83q0 .33-.25.59-.25.24-.58.24H4.08v10.34h17.92V4.42zM7 7.67H4.08V6.83H7v.84zm0 2.5H4.08V9.33H7v.84zm0 2.5H4.08v-.84H7v.84zm0 2.5H4.08v-.84H7v.84zm0 2.5H4.08v-.84H7v.84z"></path></svg>
-                   <span class="font-black text-xs uppercase tracking-widest">Rekap Excel</span>
+                   <span class="font-black text-xs uppercase tracking-widest">Download Excel Rekap</span>
                 </button>
              </div>
 
@@ -369,9 +369,9 @@
                 <div class="p-10 border-b border-gray-100 flex items-center justify-between">
                    <h2 class="text-2xl font-black text-slate-800 tracking-tight">Audit Foto Bukti POD</h2>
                    <div class="flex items-center gap-4">
-                      <button id="btn-export-validated" onclick="downloadValidatedExcel()" class="hidden flex items-center gap-3 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition active:scale-95 shadow-lg shadow-emerald-200">
+                      <button id="btn-export-bundled" onclick="downloadUnifiedValidated()" class="hidden flex items-center gap-3 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition active:scale-95 shadow-lg shadow-emerald-200">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                          Download Laporan Excel
+                          Download Paket Data (Excel + Foto)
                       </button>
                       <div id="sub-sync-status" class="flex items-center gap-3">
                          <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
@@ -451,7 +451,7 @@
                  <div class="flex-1 px-8">
                      <input type="range" min="2" max="25" value="8" onchange="setBrushSize(1, this.value)" class="w-full h-1.5 bg-slate-300 rounded-lg appearance-none cursor-pointer">
                  </div>
-                 <button onclick="clearCanvas(1)" class="px-6 py-3 bg-white text-[10px] font-black rounded-xl shadow-sm border border-gray-100 uppercase hover:bg-gray-50 transition">Reset</button>
+                 <button onclick="undo(1)" class="p-3 mr-2 bg-white border border-gray-100 rounded-xl hover:bg-gray-50 transition shadow-sm" title="Undo"><svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg></button><button onclick="redo(1)" class="p-3 mr-4 bg-white border border-gray-100 rounded-xl hover:bg-gray-50 transition shadow-sm" title="Redo"><svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg></button><button onclick="clearCanvas(1)" class="px-6 py-3 bg-white text-[10px] font-black rounded-xl shadow-sm border border-gray-100 uppercase hover:bg-gray-50 transition">Reset</button>
                  <button id="btn-save-edit" onclick="saveEditPermanent(1)" class="px-8 py-3 bg-indigo-600 text-white text-[10px] font-black rounded-2xl shadow-lg shadow-indigo-200 uppercase transition active:scale-95 hover:bg-indigo-700">Save Changes</button>
              </div>
              <div class="pl-12 border-l border-gray-100 ml-8">
@@ -501,8 +501,8 @@
     let startX = 0, startY = 0;
     let lbContext = { isPOD: false, wb: '', img1: '', img2: '', spr: '' };
     let paintStates = { 
-        1: { color: 'red', size: 5, drawing: false, ctx: null, lastPos: null, fileName: '' },
-        2: { color: 'red', size: 5, drawing: false, ctx: null, lastPos: null, fileName: '' }
+        1: { color: 'red', size: 5, drawing: false, ctx: null, lastPos: null, fileName: '', history: [], redoStack: [] },
+        2: { color: 'red', size: 5, drawing: false, ctx: null, lastPos: null, fileName: '', history: [], redoStack: [] }
     };
 
 
@@ -573,8 +573,17 @@
         ctx.lineJoin = 'round';
         paintStates[id].ctx = ctx;
 
+        // Initial state for undo
+        paintStates[id].history = [ctx.getImageData(0, 0, canvas.width, canvas.height)];
+        paintStates[id].redoStack = [];
+
         canvas.onmousedown = (e) => { paintStates[id].drawing = true; paintStates[id].lastPos = getPos(e, canvas); };
-        window.onmouseup = () => { paintStates[id].drawing = false; };
+        window.addEventListener('mouseup', () => { 
+            if (paintStates[id].drawing) {
+                saveHistory(id);
+            }
+            paintStates[id].drawing = false; 
+        });
         canvas.onmousemove = (e) => {
             if (!paintStates[id].drawing) return;
             const pos = getPos(e, canvas);
@@ -586,6 +595,44 @@
             ctx.stroke();
             paintStates[id].lastPos = pos;
         };
+    }
+
+    function saveHistory(id) {
+        const state = paintStates[id];
+        const canvas = document.getElementById('canvas' + id);
+        if (!state.ctx || !canvas) return;
+        state.history.push(state.ctx.getImageData(0, 0, canvas.width, canvas.height));
+        if (state.history.length > 21) state.history.shift();
+        state.redoStack = [];
+    }
+
+    function undo(id) {
+        const state = paintStates[id];
+        if (state.history.length > 1) {
+            const current = state.history.pop();
+            state.redoStack.push(current);
+            const last = state.history[state.history.length - 1];
+            state.ctx.putImageData(last, 0, 0);
+        }
+    }
+
+    function redo(id) {
+        const state = paintStates[id];
+        if (state.redoStack.length > 0) {
+            const next = state.redoStack.pop();
+            state.history.push(next);
+            state.ctx.putImageData(next, 0, 0);
+        }
+    }
+
+
+    function clearCanvas(id) {
+        const canvas = document.getElementById('canvas' + id);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        paintStates[id].history = [ctx.getImageData(0, 0, canvas.width, canvas.height)];
+        paintStates[id].redoStack = [];
     }
 
 
@@ -811,7 +858,7 @@
         // Toggle visibility of columns & download button
         const isVal = (tab === 'validated');
         document.getElementById('th-aksi').style.display = isVal ? 'none' : 'table-cell';
-        document.getElementById('btn-export-validated').classList.toggle('hidden', !isVal);
+        document.getElementById('btn-export-bundled').classList.toggle('hidden', !isVal);
 
         loadStats();
     }
@@ -993,6 +1040,14 @@
         if (!reason) return;
         try { const res = await axios.post(`http://localhost:${serverPort}/api/desktop/reject`, { waybill_id: wb, reason }); if (res.data.success) { loadStats(); } } catch (e) { alert("Error Reject"); }
     }
+    function downloadOutstandingExcel() { 
+        window.location.href = `http://localhost:${serverPort}/api/desktop/export-outstanding`; 
+    }
+    
+    function downloadUnifiedValidated() { 
+        window.location.href = `http://localhost:${serverPort}/api/desktop/export-bundled-validated`; 
+    }
+
     function downloadZip() { const dp = document.getElementById('drop-point-select').value; window.location.href = `http://localhost:${serverPort}/api/desktop/download-zip?dropPoint=${encodeURIComponent(dp)}`; }
     function downloadValidatedExcel() { window.location.href = `http://localhost:${serverPort}/api/desktop/export-validated`; }
 

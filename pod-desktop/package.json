@@ -2,60 +2,16 @@
   "name": "pod-desktop",
   "version": "1.0.0",
   "description": "",
-  "main": "main.js",
   "scripts": {
-    "start": "electron .",
-    "build:css": "npx tailwindcss@3 -i src/input.css -o public/tailwind.css --minify && copy public\\tailwind.css desktop\\tailwind.css",
-    "pack": "npm run build:css && electron-builder --dir",
-    "dist": "npm run build:css && electron-builder"
+    "dev": "npm run build:css && tauri dev",
+    "build": "npm run build:css && tauri build",
+    "build:css": "npx tailwindcss -i src/input.css -o public/tailwind.css --minify && copy public\\tailwind.css desktop\\tailwind.css"
   },
   "keywords": [],
   "author": "BEWA Logistics",
   "license": "ISC",
-  "type": "commonjs",
-  "build": {
-    "appId": "com.bewalogi.poddesktop",
-    "productName": "BEWA Assisten DP",
-    "directories": {
-      "output": "release"
-    },
-    "win": {
-      "target": [
-        "portable"
-      ]
-    },
-    "files": [
-      "main.js",
-      "server.js",
-      "database.js",
-      ".env",
-      "desktop/**/*",
-      "public/**/*",
-      "!release/**/*"
-    ],
-    "asar": true,
-    "asarUnpack": [
-      "**/*.node"
-    ]
-  },
-  "dependencies": {
-    "archiver": "^7.0.1",
-    "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.8.0",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.1",
-    "express": "^5.2.1",
-    "multer": "^2.1.1",
-    "xlsx": "^0.18.5"
-  },
   "devDependencies": {
     "@tauri-apps/cli": "^2.10.1",
-    "autoprefixer": "^10.4.27",
-    "concurrently": "^9.2.1",
-    "electron": "^41.2.0",
-    "electron-builder": "^26.8.1",
-    "nodemon": "^3.1.14",
-    "postcss": "^8.5.9",
-    "tailwindcss": "^4.2.2"
+    "tailwindcss": "^3.4.17"
   }
 }

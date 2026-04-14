@@ -77,6 +77,40 @@ pub fn get_outstanding(conn: &Connection, dp: Option<&str>, search: Option<&str>
     Ok((waybills, total))
 }
 
+pub fn get_all_outstanding(conn: &Connection) -> Result<Vec<Waybill>> {
+    let mut stmt = conn.prepare(
+        "SELECT *, CAST(JULIANDAY(CURRENT_DATE) - JULIANDAY(DATE(waktu_sampai)) + 1 AS INTEGER) as age_days 
+         FROM assignments 
+         WHERE status != 'COMPLETED' AND status != 'VALIDATED'
+         ORDER BY waktu_sampai ASC"
+    )?;
+
+    let waybills = stmt.query_map([], |row| {
+        Ok(Waybill {
+            waybill_id: row.get("waybill_id")?,
+            penerima: row.get("penerima").unwrap_or(None),
+            kecamatan_penerima: row.get("kecamatan_penerima").unwrap_or(None),
+            drop_point: row.get("drop_point").unwrap_or(None),
+            sprinter_name: row.get("sprinter_name").unwrap_or(None),
+            sprinter_code: row.get("sprinter_code").unwrap_or(None),
+            pod_image1: row.get("pod_image1").unwrap_or(None),
+            pod_image2: row.get("pod_image2").unwrap_or(None),
+            waktu_sampai: row.get("waktu_sampai").unwrap_or(None),
+            station_scan: row.get("station_scan").unwrap_or(None),
+            jenis_scan: row.get("jenis_scan").unwrap_or(None),
+            waktu_scan: row.get("waktu_scan").unwrap_or(None),
+            status: row.get("status")?,
+            rejection_reason: row.get("rejection_reason").unwrap_or(None),
+            updated_at: row.get("updated_at").unwrap_or(None),
+            age_days: row.get("age_days").unwrap_or(0),
+        })
+    })?
+    .filter_map(Result::ok)
+    .collect();
+    
+    Ok(waybills)
+}
+
 
 
 pub fn insert_assignment(conn: &Connection, w: &Waybill) -> Result<()> {
