@@ -8,6 +8,7 @@ use tower_http::services::ServeDir;
 use crate::api;
 
 use tokio::sync::oneshot;
+use std::path::PathBuf;
 
 pub async fn run(tx: oneshot::Sender<u16>) {
     let app = Router::new()
@@ -40,8 +41,20 @@ pub async fn run(tx: oneshot::Sender<u16>) {
         .route("/api/mobile/tasks", get(api::mobile::tasks))
         .route("/api/mobile/upload", post(api::mobile::upload_pod))
         
-        // Serve static web files
-        .nest_service("/", ServeDir::new("./public"))
+        
+        // Serve static web files (Mobile Portal)
+        .nest_service("/", {
+            let mut public_path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")).join("public");
+            if !public_path.exists() {
+                // In Tauri dev mode, public folder is usually in the parent directory of src-tauri
+                if let Some(parent) = std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")).parent() {
+                    let p2 = parent.join("public");
+                    if p2.exists() { public_path = p2; }
+                }
+            }
+            println!("[SERVER] Serving Sprinter Portal from: {:?}", public_path.canonicalize().unwrap_or(public_path.clone()));
+            ServeDir::new(public_path)
+        })
 
 
 
