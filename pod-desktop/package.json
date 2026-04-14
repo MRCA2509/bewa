@@ -5,8 +5,9 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "build:css": "npx tailwindcss@3 -i src/input.css -o public/tailwind.css --minify && copy public\\tailwind.css desktop\\tailwind.css",
+    "pack": "npm run build:css && electron-builder --dir",
+    "dist": "npm run build:css && electron-builder"
   },
   "keywords": [],
   "author": "BEWA Logistics",
@@ -15,12 +16,13 @@
   "build": {
     "appId": "com.bewalogi.poddesktop",
     "productName": "BEWA Assisten DP",
-    "cscLink": null,
     "directories": {
       "output": "release"
     },
     "win": {
-      "target": ["portable"]
+      "target": [
+        "portable"
+      ]
     },
     "files": [
       "main.js",
@@ -29,20 +31,25 @@
       ".env",
       "desktop/**/*",
       "public/**/*",
-      "package.json",
-      "node_modules/**/*"
+      "!release/**/*"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "**/*.node"
     ]
   },
   "dependencies": {
     "archiver": "^7.0.1",
-    "axios": "^1.14.0",
+    "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.8.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.1",
     "express": "^5.2.1",
-    "multer": "^2.1.1"
+    "multer": "^2.1.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.10.1",
     "autoprefixer": "^10.4.27",
     "concurrently": "^9.2.1",
     "electron": "^41.2.0",

@@ -1,0 +1,46 @@
+[package]
+name = "bewa-pod-server"
+version = "2.0.0"
+description = "BEWA POD Local Server Control"
+authors = ["BEWA"]
+license = ""
+repository = ""
+edition = "2021"
+default-run = "bewa-pod-server"
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.5.6", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+tauri = { version = "2.10.3", features = [] }
+tauri-plugin-log = "2"
+tauri-plugin-shell = "2.3.5"
+
+# HTTP Server & async
+tokio = { version = "1", features = ["full"] }
+axum = { version = "0.7", features = ["multipart", "macros"] }
+axum-extra = { version = "0.9", features = ["multipart"] }
+tower-http = { version = "0.5", features = ["fs", "cors", "trace"] }
+
+# DB
+rusqlite = { version = "0.31", features = ["bundled"] }
+
+# Utilities
+chrono = "0.4"
+bcrypt = "0.15"
+base64 = "0.22"
+local-ip-address = "0.6.11"
+
+# Excel & Zip
+calamine = "0.30"
+rust_xlsxwriter = "0.92"
+zip = "0.6"
+regex = "1.12.3"
+uuid = { version = "1.23.0", features = ["v4"] }
