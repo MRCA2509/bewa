@@ -560,6 +560,10 @@
         canvas.width = img.clientWidth;
         canvas.height = img.clientHeight;
         
+        // Force visual dimension to prevent CSS stretching
+        canvas.style.width = img.clientWidth + 'px';
+        canvas.style.height = img.clientHeight + 'px';
+        
         // Position canvas perfectly over image
         canvas.style.left = img.offsetLeft + 'px';
         canvas.style.top = img.offsetTop + 'px';
@@ -587,7 +591,12 @@
 
     function getPos(e, canvas) {
         const rect = canvas.getBoundingClientRect();
-        return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return { 
+            x: (e.clientX - rect.left) * scaleX, 
+            y: (e.clientY - rect.top) * scaleY 
+        };
     }
 
     function setTool(id, color, el) {
