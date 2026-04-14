@@ -64,13 +64,13 @@ pub async fn stats(Query(params): Query<HashMap<String, String>>) -> Json<Value>
 }
 
 pub async fn system_logs() -> Json<Value> {
-    let conn = crate::db::init_db().unwrap();
-    let logs = crate::db::queries::get_logs(&conn).unwrap_or_default();
+    let conn = crate::db::init_db().expect("DB connection failed");
+    let logs = crate::db::queries::get_logs(&conn).expect("get_logs failed");
     Json(json!({ "success": true, "logs": logs }))
 }
 
 pub async fn outstanding(Query(params): Query<HashMap<String, String>>) -> Json<Value> {
-    let conn = crate::db::init_db().unwrap();
+    let conn = crate::db::init_db().expect("DB connection failed");
     let dp_filter = params.get("dropPoint").filter(|s| !s.is_empty() && s.as_str() != "undefined" && s.as_str() != "null").map(|s| s.as_str());
     let search = params.get("search").filter(|s| !s.is_empty() && s.as_str() != "undefined" && s.as_str() != "null").map(|s| s.as_str());
     let page: u32 = params.get("page").and_then(|p: &String| p.parse().ok()).unwrap_or(1);
@@ -104,7 +104,7 @@ pub struct ActionPayload {
 
 
 pub async fn validate(axum::Json(payload): axum::Json<ActionPayload>) -> Json<Value> {
-    let conn = crate::db::init_db().unwrap();
+    let conn = crate::db::init_db().expect("DB connection failed");
     println!("[API] Validating Waybill: {}", payload.waybill_id);
     
     match crate::db::queries::update_status(&conn, &payload.waybill_id, "VALIDATED", None) {
@@ -120,7 +120,7 @@ pub async fn validate(axum::Json(payload): axum::Json<ActionPayload>) -> Json<Va
 }
 
 pub async fn reject(axum::Json(payload): axum::Json<ActionPayload>) -> Json<Value> {
-    let conn = crate::db::init_db().unwrap();
+    let conn = crate::db::init_db().expect("DB connection failed");
     let reason = payload.reason.clone().unwrap_or_else(|| "Tanpa alasan".to_string());
     println!("[API] Rejecting Waybill: {} | Reason: {}", payload.waybill_id, reason);
 
@@ -145,7 +145,7 @@ pub async fn login(axum::Json(payload): axum::Json<Value>) -> Json<Value> {
     let allowed_dps = crate::constants::ALLOWED_DROP_POINTS;
     
     if username == "admin" && (password == "admin123" || password == "123") {
-        let conn = crate::db::init_db().unwrap();
+        let conn = crate::db::init_db().expect("DB connection failed");
         crate::db::queries::insert_log(&conn, "Admin Pusat berhasil login.");
         return Json(json!({
             "success": true,
@@ -154,7 +154,7 @@ pub async fn login(axum::Json(payload): axum::Json<Value>) -> Json<Value> {
     }
     
     if username == "buli" && password == "buli01" {
-        let conn = crate::db::init_db().unwrap();
+        let conn = crate::db::init_db().expect("DB connection failed");
         crate::db::queries::insert_log(&conn, "Admin BULI berhasil login.");
         return Json(json!({
             "success": true,
@@ -209,28 +209,28 @@ use axum_extra::extract::Multipart;
 use rust_xlsxwriter::{Workbook, Format, Color};
 
 pub async fn export_outstanding() -> impl axum::response::IntoResponse {
-    let conn = crate::db::init_db().unwrap();
+    let conn = crate::db::init_db().expect("Database connection failed in export");
     let waybills = crate::db::queries::get_all_outstanding(&conn).unwrap_or(vec![]);
 
     let mut workbook = Workbook::new();
     let worksheet = workbook.add_worksheet();
 
     // Headers
-    worksheet.write(0, 0, "Waybill ID").unwrap();
-    worksheet.write(0, 1, "Penerima").unwrap();
-    worksheet.write(0, 2, "Drop Point").unwrap();
-    worksheet.write(0, 3, "Status").unwrap();
+    worksheet.write(0, 0, "Waybill ID").expect("Xlsx Write failed");
+    worksheet.write(0, 1, "Penerima").expect("Xlsx Write failed");
+    worksheet.write(0, 2, "Drop Point").expect("Xlsx Write failed");
+    worksheet.write(0, 3, "Status").expect("Xlsx Write failed");
 
     for (i, w) in waybills.iter().enumerate() {
         let row = (i + 1) as u32;
-        worksheet.write(row, 0, &w.waybill_id).unwrap();
-        worksheet.write(row, 1, w.penerima.as_deref().unwrap_or("")).unwrap();
-        worksheet.write(row, 2, w.drop_point.as_deref().unwrap_or("")).unwrap();
-        worksheet.write(row, 3, &w.status).unwrap();
+        worksheet.write(row, 0, &w.waybill_id).expect("Write fail");
+        worksheet.write(row, 1, w.penerima.as_deref().unwrap_or("")).expect("Write fail");
+        worksheet.write(row, 2, w.drop_point.as_deref().unwrap_or("")).expect("Write fail");
+        worksheet.write(row, 3, &w.status).expect("Write fail");
     }
 
 
-    let buf = workbook.save_to_buffer().unwrap();
+    let buf = workbook.save_to_buffer().expect("Failed to save outstanding buffer");
     
     (
         [
@@ -242,8 +242,8 @@ pub async fn export_outstanding() -> impl axum::response::IntoResponse {
 }
 
 pub async fn export_validated() -> impl axum::response::IntoResponse {
-    let conn = crate::db::init_db().unwrap();
-    let mut stmt = conn.prepare("SELECT waybill_id, sprinter_name, pod_image1, pod_image2 FROM assignments WHERE status = 'VALIDATED' ORDER BY updated_at DESC").unwrap();
+    let conn = crate::db::init_db().expect("Database connection failed");
+    let mut stmt = conn.prepare("SELECT waybill_id, sprinter_name, pod_image1, pod_image2 FROM assignments WHERE status = 'VALIDATED' ORDER BY updated_at DESC").expect("Failed to prepare export query");
     
     let rows = stmt.query_map([], |row| {
         Ok((
@@ -252,29 +252,29 @@ pub async fn export_validated() -> impl axum::response::IntoResponse {
             row.get::<_, Option<String>>(2)?.unwrap_or_default(),
             row.get::<_, Option<String>>(3)?.unwrap_or_default(),
         ))
-    }).unwrap();
+    }).expect("Query map failed in export");
 
     let mut workbook = Workbook::new();
     let worksheet = workbook.add_worksheet();
 
     // Headers
     let header_format = Format::new().set_bold().set_font_color(Color::Blue);
-    worksheet.write_with_format(0, 0, "No. Waybill", &header_format).unwrap();
-    worksheet.write_with_format(0, 1, "Nama Sprinter", &header_format).unwrap();
-    worksheet.write_with_format(0, 2, "Path Foto POD", &header_format).unwrap();
-    worksheet.write_with_format(0, 3, "Path Foto Fisik", &header_format).unwrap();
+    worksheet.write_with_format(0, 0, "No. Waybill", &header_format).expect("Xlsx Write failed");
+    worksheet.write_with_format(0, 1, "Nama Sprinter", &header_format).expect("Xlsx Write failed");
+    worksheet.write_with_format(0, 2, "Path Foto POD", &header_format).expect("Xlsx Write failed");
+    worksheet.write_with_format(0, 3, "Path Foto Fisik", &header_format).expect("Xlsx Write failed");
 
     for (i, row_data) in rows.enumerate() {
         if let Ok((wb, name, img1, img2)) = row_data {
             let row_idx = (i + 1) as u32;
-            worksheet.write(row_idx, 0, &wb).unwrap();
-            worksheet.write(row_idx, 1, &name).unwrap();
-            worksheet.write(row_idx, 2, &img1).unwrap();
-            worksheet.write(row_idx, 3, &img2).unwrap();
+            worksheet.write(row_idx, 0, &wb).expect("Xlsx Write failed");
+            worksheet.write(row_idx, 1, &name).expect("Xlsx Write failed");
+            worksheet.write(row_idx, 2, &img1).expect("Xlsx Write failed");
+            worksheet.write(row_idx, 3, &img2).expect("Xlsx Write failed");
         }
     }
 
-    let buf = workbook.save_to_buffer().unwrap();
+    let buf = workbook.save_to_buffer().expect("Buffer save failed");
     (
         [
             (axum::http::header::CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
@@ -285,8 +285,8 @@ pub async fn export_validated() -> impl axum::response::IntoResponse {
 }
 
 pub async fn unified_export_validated() -> impl axum::response::IntoResponse {
-    let conn = crate::db::init_db().unwrap();
-    let mut stmt = conn.prepare("SELECT waybill_id, sprinter_name, pod_image1, pod_image2 FROM assignments WHERE status = 'VALIDATED' ORDER BY updated_at DESC").unwrap();
+    let conn = crate::db::init_db().expect("DB connection failed");
+    let mut stmt = conn.prepare("SELECT waybill_id, sprinter_name, pod_image1, pod_image2 FROM assignments WHERE status = 'VALIDATED' ORDER BY updated_at DESC").expect("Prepare failed");
     
     let rows: Vec<(String, String, String, String)> = stmt.query_map([], |row| {
         Ok((
@@ -295,25 +295,25 @@ pub async fn unified_export_validated() -> impl axum::response::IntoResponse {
             row.get::<_, Option<String>>(2)?.unwrap_or_default(),
             row.get::<_, Option<String>>(3)?.unwrap_or_default(),
         ))
-    }).unwrap().filter_map(|r| r.ok()).collect();
+    }).expect("Query map failed").filter_map(|r| r.ok()).collect();
 
     // 1. Create Excel
     let mut workbook = Workbook::new();
     let worksheet = workbook.add_worksheet();
     let header_format = Format::new().set_bold().set_font_color(Color::Blue);
-    worksheet.write_with_format(0, 0, "No. Waybill", &header_format).unwrap();
-    worksheet.write_with_format(0, 1, "Nama Sprinter", &header_format).unwrap();
-    worksheet.write_with_format(0, 2, "Path Foto POD", &header_format).unwrap();
-    worksheet.write_with_format(0, 3, "Path Foto Fisik", &header_format).unwrap();
+    worksheet.write_with_format(0, 0, "No. Waybill", &header_format).expect("Xlsx Write failed");
+    worksheet.write_with_format(0, 1, "Nama Sprinter", &header_format).expect("Xlsx Write failed");
+    worksheet.write_with_format(0, 2, "Path Foto POD", &header_format).expect("Xlsx Write failed");
+    worksheet.write_with_format(0, 3, "Path Foto Fisik", &header_format).expect("Xlsx Write failed");
 
     for (i, (wb, name, img1, img2)) in rows.iter().enumerate() {
         let row_idx = (i + 1) as u32;
-        worksheet.write(row_idx, 0, wb).unwrap();
-        worksheet.write(row_idx, 1, name).unwrap();
-        worksheet.write(row_idx, 2, img1).unwrap();
-        worksheet.write(row_idx, 3, img2).unwrap();
+        worksheet.write(row_idx, 0, wb).expect("Failed to write wb");
+        worksheet.write(row_idx, 1, name).expect("Failed to write name");
+        worksheet.write(row_idx, 2, img1).expect("Failed to write img1");
+        worksheet.write(row_idx, 3, img2).expect("Failed to write img2");
     }
-    let excel_buf = workbook.save_to_buffer().unwrap();
+    let excel_buf = workbook.save_to_buffer().expect("Failed to save workbook buffer");
 
     // 2. Create ZIP
     let mut zip_buf = Vec::new();
@@ -372,20 +372,26 @@ pub async fn upload_excel(
     let username = headers.get("x-user-role").and_then(|h: &axum::http::HeaderValue| h.to_str().ok()).unwrap_or("Master");
     let allowed_dp = headers.get("x-user-dp").and_then(|h: &axum::http::HeaderValue| h.to_str().ok());
 
-    let conn = crate::db::init_db().unwrap();
+    let conn = crate::db::init_db().expect("Database connection failed in upload_excel");
     let mut inserted = 0;
     let mut skipped = 0;
     
-    let whitelist_dps = vec!["MABA", "BULI", "WASILE", "SOFIFI", "LABUHA", "FALAJAWA2", "SANANA", "BOBONG", "SULTAN_BABULLAH"];
+    let whitelist_dps = crate::constants::ALLOWED_DROP_POINTS;
 
-    while let Some(field) = multipart.next_field().await.unwrap() {
-        let name = field.name().unwrap().to_string();
+    while let Ok(Some(field)) = multipart.next_field().await {
+        let name = field.name().unwrap_or("").to_string();
         if name == "file" || name == "excel" {
-            let data = field.bytes().await.unwrap();
+            let data = match field.bytes().await {
+                Ok(b) => b,
+                Err(e) => {
+                    println!("[ERR] Failed to read excel multipart bytes: {}", e);
+                    continue;
+                }
+            };
             let cursor = Cursor::new(data.to_vec());
             let mut workbook: Xlsx<_> = open_workbook_from_rs(cursor).expect("Gagal buka Excel");
 
-            if let Ok(range) = workbook.worksheet_range_at(0).unwrap() {
+            if let Ok(range) = workbook.worksheet_range_at(0).expect("Sheet 1 not found") {
                 let mut header_map = HashMap::new();
                 for (i, row) in range.rows().enumerate() {
                     if i == 0 {
@@ -425,8 +431,16 @@ pub async fn upload_excel(
                         }
                     }
 
-                    // Business Logic 4: Column AI is index 34 for Recipient
-                    let recipient_raw = row.get(34).map(|c| c.to_string()).unwrap_or_default();
+                    // Business Logic 4: Recipient mapping (Dynamic or fallback to index 34)
+                    let recipient_raw = {
+                        let mapped = val(&["nama penerima", "penerima", "recipient", "consignee"]);
+                        if !mapped.is_empty() {
+                            mapped
+                        } else {
+                            // Fallback to legacy index 34 (Column AI)
+                            row.get(34).map(|c| c.to_string()).unwrap_or_default()
+                        }
+                    };
                     let recipient_clean = crate::utils::normalization::normalize_name(&recipient_raw);
 
                     let spr_name_raw = val(&["sprinter delivery", "nama sprinter", "派件员"]);
@@ -495,15 +509,15 @@ pub async fn upload_excel(
 }
 
 pub async fn download_archive() -> impl axum::response::IntoResponse {
-    let conn = crate::db::init_db().unwrap();
-    let mut stmt = conn.prepare("SELECT pod_image1, pod_image2 FROM assignments WHERE status = 'COMPLETED' OR status = 'VALIDATED'").unwrap();
+    let conn = crate::db::init_db().expect("DB connection failed");
+    let mut stmt = conn.prepare("SELECT pod_image1, pod_image2 FROM assignments WHERE status = 'COMPLETED' OR status = 'VALIDATED'").expect("Prepare failed");
     
     let mut photo_names = Vec::new();
     let rows = stmt.query_map([], |row| {
         let p1: Option<String> = row.get(0).ok();
         let p2: Option<String> = row.get(1).ok();
         Ok((p1, p2))
-    }).unwrap();
+    }).expect("Query map failed");
 
     for row in rows {
         if let Ok((p1, p2)) = row {
