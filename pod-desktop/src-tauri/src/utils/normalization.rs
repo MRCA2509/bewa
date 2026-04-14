@@ -66,3 +66,15 @@ pub fn extract_sprinter_code(input: &str) -> String {
     String::new()
 }
 
+pub fn sanitize_filename(filename: &str) -> String {
+    // 1. Remove any path components (get just the basename)
+    let path = std::path::Path::new(filename);
+    let base = path.file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or(filename);
+    
+    // 2. Remove ".." and other suspicious characters
+    let re = Regex::new(r"[^a-zA-Z0-9._\-]").expect("Regex compile failed");
+    re.replace_all(base, "_").to_string()
+}
+

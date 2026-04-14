@@ -8,7 +8,6 @@ pub fn count_total(conn: &Connection, dp_filter: Option<&str>) -> Result<u32> {
         query.push_str(" WHERE drop_point = ?");
         params.push(Box::new(dp.to_string()));
     }
-    println!("[DB] count_total - DP: {:?}, SQL: {}", dp_filter, query);
     let mut stmt = conn.prepare(&query)?;
     let count: u32 = stmt.query_row(rusqlite::params_from_iter(params), |row| row.get(0))?;
     Ok(count)
@@ -16,7 +15,6 @@ pub fn count_total(conn: &Connection, dp_filter: Option<&str>) -> Result<u32> {
 
 pub fn get_outstanding(conn: &Connection, dp: Option<&str>, search: Option<&str>, page: u32) -> Result<(Vec<Waybill>, u32)> {
     let offset = (page.max(1) - 1) * 20;
-    println!("[DB] get_outstanding - DP: {:?}, Search: {:?}, Page: {}", dp, search, page);
     
     let mut where_clauses = vec!["status != 'COMPLETED' AND status != 'VALIDATED'".to_string()];
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![];
@@ -41,15 +39,16 @@ pub fn get_outstanding(conn: &Connection, dp: Option<&str>, search: Option<&str>
 
 
     let query = format!(
-        "SELECT *, CAST(JULIANDAY(CURRENT_DATE) - JULIANDAY(DATE(waktu_sampai)) + 1 AS INTEGER) as age_days 
+        "SELECT *, CAST(JULIANDAY(DATE('now', 'localtime')) - JULIANDAY(DATE(waktu_sampai)) + 1 AS INTEGER) as umur_paket 
          FROM assignments 
          WHERE {} 
-         ORDER BY waktu_sampai ASC LIMIT 20 OFFSET {}", 
-        where_str, offset
+         ORDER BY waktu_sampai ASC LIMIT ? OFFSET ?", 
+        where_str
     );
 
-    println!("[DB] get_outstanding SQL: {}", query);
     let mut stmt = conn.prepare(&query)?;
+    params.push(Box::new(20));
+    params.push(Box::new(offset));
 
     let waybills = stmt.query_map(rusqlite::params_from_iter(params.iter()), |row| {
         Ok(Waybill {
@@ -68,7 +67,7 @@ pub fn get_outstanding(conn: &Connection, dp: Option<&str>, search: Option<&str>
             status: row.get("status")?,
             rejection_reason: row.get("rejection_reason").unwrap_or(None),
             updated_at: row.get("updated_at").unwrap_or(None),
-            age_days: row.get("age_days").unwrap_or(0),
+            umur_paket: row.get("umur_paket").unwrap_or(0),
         })
     })?
     .filter_map(Result::ok)
@@ -79,7 +78,7 @@ pub fn get_outstanding(conn: &Connection, dp: Option<&str>, search: Option<&str>
 
 pub fn get_all_outstanding(conn: &Connection) -> Result<Vec<Waybill>> {
     let mut stmt = conn.prepare(
-        "SELECT *, CAST(JULIANDAY(CURRENT_DATE) - JULIANDAY(DATE(waktu_sampai)) + 1 AS INTEGER) as age_days 
+        "SELECT *, CAST(JULIANDAY(DATE('now', 'localtime')) - JULIANDAY(DATE(waktu_sampai)) + 1 AS INTEGER) as umur_paket 
          FROM assignments 
          WHERE status != 'COMPLETED' AND status != 'VALIDATED'
          ORDER BY waktu_sampai ASC"
@@ -102,7 +101,7 @@ pub fn get_all_outstanding(conn: &Connection) -> Result<Vec<Waybill>> {
             status: row.get("status")?,
             rejection_reason: row.get("rejection_reason").unwrap_or(None),
             updated_at: row.get("updated_at").unwrap_or(None),
-            age_days: row.get("age_days").unwrap_or(0),
+            umur_paket: row.get("umur_paket").unwrap_or(0),
         })
     })?
     .filter_map(Result::ok)
@@ -144,7 +143,6 @@ pub fn count_status(conn: &Connection, status: &str, dp_filter: Option<&str>) ->
         params.push(Box::new(dp.to_string()));
     }
     
-    println!("[DB] count_status - Status: {}, DP: {:?}, SQL: {}", status, dp_filter, query);
     let mut stmt = conn.prepare(&query)?;
     let count: u32 = stmt.query_row(rusqlite::params_from_iter(params), |row| row.get(0))?;
     Ok(count)
@@ -176,7 +174,6 @@ pub fn get_sprinter_stats(conn: &Connection, dp_filter: Option<&str>) -> Result<
     
     query.push_str(" GROUP BY sprinter_name, sprinter_code ORDER BY total_tasks DESC");
     
-    println!("[DB] get_sprinter_stats - DP: {:?}, SQL: {}", dp_filter, query);
     let mut stmt = conn.prepare(&query)?;
     let stats = stmt.query_map(rusqlite::params_from_iter(params), |row| {
         Ok(SprinterStat {
@@ -193,16 +190,16 @@ pub fn get_sprinter_stats(conn: &Connection, dp_filter: Option<&str>) -> Result<
 }
 
 pub fn get_review_tasks(conn: &Connection, status: &str, dp_filter: Option<&str>) -> Result<Vec<Waybill>> {
-    let mut query = format!("SELECT *, 0 as age_days FROM assignments WHERE status = ?");
+    let mut query = format!("SELECT *, 0 as umur_paket FROM assignments WHERE status = ?");
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![Box::new(status.to_string())];
     
     if let Some(dp) = dp_filter {
         query.push_str(" AND drop_point = ?");
         params.push(Box::new(dp.to_string()));
     }
-    query.push_str(" ORDER BY updated_at DESC LIMIT 50");
+    query.push_str(" ORDER BY updated_at DESC LIMIT ?");
+    params.push(Box::new(50));
     
-    println!("[DB] get_review_tasks - Status: {}, DP: {:?}, SQL: {}", status, dp_filter, query);
     let mut stmt = conn.prepare(&query)?;
     let waybills = stmt.query_map(rusqlite::params_from_iter(params), |row| {
         Ok(Waybill {
@@ -221,7 +218,7 @@ pub fn get_review_tasks(conn: &Connection, status: &str, dp_filter: Option<&str>
             status: row.get("status")?,
             rejection_reason: row.get("rejection_reason").unwrap_or(None),
             updated_at: row.get("updated_at").unwrap_or(None),
-            age_days: row.get("age_days").unwrap_or(0),
+            umur_paket: row.get("umur_paket").unwrap_or(0),
         })
     })?
     .filter_map(Result::ok)
@@ -256,7 +253,7 @@ pub fn get_logs(conn: &Connection) -> Result<Vec<SystemLog>> {
 // MOBILE API QUERIES
 pub fn get_sprinter_tasks(conn: &Connection, code: &str) -> Result<Vec<Waybill>> {
     let mut stmt = conn.prepare(
-        "SELECT *, CAST(JULIANDAY(CURRENT_DATE) - JULIANDAY(DATE(waktu_sampai)) + 1 AS INTEGER) as age_days 
+        "SELECT *, CAST(JULIANDAY(DATE('now', 'localtime')) - JULIANDAY(DATE(waktu_sampai)) + 1 AS INTEGER) as umur_paket 
          FROM assignments 
          WHERE sprinter_code = ? AND status IN ('PENDING', 'REJECTED')
          ORDER BY waktu_sampai ASC"
@@ -279,7 +276,7 @@ pub fn get_sprinter_tasks(conn: &Connection, code: &str) -> Result<Vec<Waybill>>
             status: row.get("status")?,
             rejection_reason: row.get("rejection_reason").unwrap_or(None),
             updated_at: row.get("updated_at").unwrap_or(None),
-            age_days: row.get("age_days").unwrap_or(0),
+            umur_paket: row.get("umur_paket").unwrap_or(0),
         })
     })?
     .filter_map(Result::ok)

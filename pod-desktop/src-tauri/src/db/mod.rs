@@ -5,15 +5,33 @@ pub mod models;
 pub mod queries;
 
 pub fn get_local_dir() -> PathBuf {
-    std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
+    let mut current = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    
+    // If we're in a situation where current_dir is elsewhere (e.g. shortcut), 
+    // try to find it relative to the executable
+    if !current.join("data").exists() {
+        if let Ok(exe_path) = std::env::current_exe() {
+            if let Some(exe_dir) = exe_path.parent() {
+                let p_prod = exe_dir.to_path_buf();
+                if p_prod.join("data").exists() {
+                    current = p_prod;
+                }
+            }
+        }
+    }
+    current
 }
 
 pub fn init_db() -> Result<Connection> {
     let data_dir = get_local_dir().join("data");
     let uploads_dir = get_local_dir().join("uploads");
     
-    if !data_dir.exists() { std::fs::create_dir_all(&data_dir).expect("Failed to create data directory"); }
-    if !uploads_dir.exists() { std::fs::create_dir_all(&uploads_dir).expect("Failed to create uploads directory"); }
+    if !data_dir.exists() { 
+        std::fs::create_dir_all(&data_dir).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?; 
+    }
+    if !uploads_dir.exists() { 
+        std::fs::create_dir_all(&uploads_dir).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?; 
+    }
     
     let db_path = data_dir.join("local.db");
     println!("[DB] Initializing database at: {:?}", db_path.canonicalize().unwrap_or(db_path.clone()));

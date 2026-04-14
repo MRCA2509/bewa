@@ -1,14 +1,17 @@
 use axum::{
     routing::{get, post},
     Router,
+    extract::Path,
+    response::IntoResponse,
+    http::{StatusCode, header},
 };
 use std::net::SocketAddr;
 use tower_http::cors::CorsLayer;
-use tower_http::services::ServeDir;
+
 use crate::api;
 
 use tokio::sync::oneshot;
-use std::path::PathBuf;
+
 
 pub async fn run(tx: oneshot::Sender<u16>) {
     let app = Router::new()
@@ -42,23 +45,10 @@ pub async fn run(tx: oneshot::Sender<u16>) {
         .route("/api/mobile/upload", post(api::mobile::upload_pod))
         
         
-        // Serve static web files (Mobile Portal)
-        .nest_service("/", {
-            let mut public_path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")).join("public");
-            if !public_path.exists() {
-                // In Tauri dev mode, public folder is usually in the parent directory of src-tauri
-                if let Some(parent) = std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")).parent() {
-                    let p2 = parent.join("public");
-                    if p2.exists() { public_path = p2; }
-                }
-            }
-            println!("[SERVER] Serving Sprinter Portal from: {:?}", public_path.canonicalize().unwrap_or(public_path.clone()));
-            ServeDir::new(public_path)
-        })
+        // Serve embedded static web files (Mobile Portal)
+        .route("/", get(static_handler))
+        .route("/*path", get(static_handler))
 
-
-
-        
         // CORS Middleware
         .layer(CorsLayer::permissive());
 
@@ -67,7 +57,6 @@ pub async fn run(tx: oneshot::Sender<u16>) {
         let addr = SocketAddr::from(([0, 0, 0, 0], port));
         match tokio::net::TcpListener::bind(addr).await {
             Ok(l) => {
-                println!("Server HTTP Modular Axum Berjalan: http://{}", addr);
                 break l;
             }
             Err(_) => {
@@ -78,5 +67,33 @@ pub async fn run(tx: oneshot::Sender<u16>) {
 
     let _ = tx.send(port);
 
-    axum::serve(listener, app).await.unwrap();
+    if let Err(e) = axum::serve(listener, app).await {
+        eprintln!("[CRITICAL] Axum server loop failed: {}", e);
+    }
+}
+
+async fn static_handler(path: Option<Path<String>>) -> impl IntoResponse {
+    let path_str = path.map(|Path(p)| p).unwrap_or_else(|| "index.html".to_string());
+    
+    // Normalize path for index.html
+    let asset_path = if path_str.is_empty() || path_str == "/" {
+        "index.html"
+    } else {
+        &path_str
+    };
+
+    match crate::assets::Asset::get(asset_path) {
+        Some(content) => {
+            let mime = mime_guess::from_path(asset_path).first_or_octet_stream();
+            ([(header::CONTENT_TYPE, mime.as_ref())], content.data).into_response()
+        }
+        None => {
+            // Fallback for SPA routing: serve index.html if asset not found
+            if let Some(content) = crate::assets::Asset::get("index.html") {
+                ([(header::CONTENT_TYPE, "text/html")], content.data).into_response()
+            } else {
+                (StatusCode::NOT_FOUND, "Not Found").into_response()
+            }
+        }
+    }
 }

@@ -44,3 +44,5 @@ rust_xlsxwriter = "0.92"
 zip = "0.6"
 regex = "1.12.3"
 uuid = { version = "1.23.0", features = ["v4"] }
+rust-embed = "8.6.0"
+mime_guess = "2.0"

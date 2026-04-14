@@ -17,11 +17,13 @@ pub struct Waybill {
     pub status: String,
     pub rejection_reason: Option<String>,
     pub updated_at: Option<String>,
-    pub age_days: i32,
+    pub umur_paket: i32,
 }
 
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub struct User {
     pub id: i64,
     pub username: String,
