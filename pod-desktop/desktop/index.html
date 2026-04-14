@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>BEWA Desktop Audit</title>
 
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="tailwind.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;400;500;600;700;800;900&display=swap');
     body { font-family: 'Outfit', sans-serif; background-color: #f3f4f6; position: relative; }
@@ -661,7 +661,9 @@
                 if (res.data.success) {
                     alert("Berhasil! Gambar telah diperbarui secara permanen.");
                     // Refresh current view
-                    img.src = img.src.split('?')[0] + '?t=' + new Date().getTime();
+                    const refUrl = new URL(img.src);
+                    refUrl.searchParams.set('t', new Date().getTime());
+                    img.src = refUrl.toString();
                     clearCanvas(id);
                     loadStats(); // Re-sync table data
                 } else { alert(res.data.message); }
@@ -671,12 +673,25 @@
             btn.disabled = false;
         };
 
+        tempImg.onerror = () => {
+            alert("Terjadi kesalahan memuat gambar asli. Proses dihentikan.");
+            btn.innerHTML = originalBtnText;
+            btn.disabled = false;
+        };
+
         // Set src AFTER defining onload
-        tempImg.src = img.src.split('?')[0] + '?t=' + new Date().getTime(); // Bust cache on load too
+        const targetUrl = new URL(img.src);
+        targetUrl.searchParams.set('t', new Date().getTime());
+        tempImg.src = targetUrl.toString(); // Bust cache on load too
 
     }
 
     async function initConfig() {
+      try {
+         if (window.__TAURI__ && window.__TAURI__.core) {
+            serverPort = await window.__TAURI__.core.invoke('get_server_port');
+         }
+      } catch (e) { console.warn("Tauri IPC failed, fallback to 3000"); }
 
       try {
         const res = await axios.get(`http://localhost:${serverPort}/api/desktop/config`);
